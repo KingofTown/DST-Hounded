@@ -410,6 +410,9 @@ local function PlanNextHoundAttack(forceUpdate, prefabIndex)
 		self.inst:DoTaskInTime(1, PlanNextHoundAttack)
 		return
 	end
+	
+	-- Reseet this variable
+	warningCount = 1
 
 	if _spawnmode == "escalating" then
 		CalcEscalationLevel()
@@ -870,6 +873,10 @@ function self:OnUpdate(dt)
 				else
 					spawninforec.timetonexthound = .5 + math.random()*1
 				end
+				
+				-- Adjust the spawn time based on the current index
+				local timeMult = MOB_LIST[self.currentIndex].timeMult or 1
+				spawninforec.timetonexthound = spawninforec.timetonexthound*timeMult
 
 			end
 			if spawninforec.houndstorelease <= 0 then
@@ -906,6 +913,7 @@ function self:OnUpdate(dt)
                 (_timetoattack < 90 and 4 + math.random(2)) or
                                         5 + math.random(4)
             self:DoWarningSound()
+			warningCount = warningCount+1
         end
     end
 end
