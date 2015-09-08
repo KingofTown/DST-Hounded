@@ -4,7 +4,7 @@ description = "Are the occasional Hound attack getting boring? Try this out. Eac
               " be an attack from a random mob selected from the configuration file.\n" ..
 			  "Surprises await those brave enough to try it out."
 author = "KingofTown"
-version = "0.1"
+version = "0.9"
 forumthread = "None"
 icon_atlas = "modicon.xml"
 icon = "modicon.tex"
@@ -12,8 +12,6 @@ priority = 2
 
 
 -- Compatibility
-dont_starve_compatible = true
-reign_of_giants_compatible = true
 dst_compatible = true
 api_version = 10
 
@@ -101,24 +99,6 @@ configuration_options =
 		default = "default",
 	},
 	{
-		name = "killerbee",
-		label = "Killer Bees",
-		options =	{
-						{description = "On", data = "default"},
-						{description = "Off", data = "off"},
-					},
-		default = "default",
-	},
-	{
-		name = "bat",
-		label = "Bats",
-		options =	{
-						{description = "On", data = "default"},
-						{description = "Off", data = "off"},
-					},
-		default = "default",
-	},
-	{
 		name = "knight",
 		label = "Clockwork Knights",
 		options =	{
@@ -139,6 +119,15 @@ configuration_options =
 	{
 		name = "penguin",
 		label = "Penguins!",
+		options =	{
+						{description = "On", data = "default"},
+						{description = "Off", data = "off"},
+					},
+		default = "default",
+	},
+	{
+		name = "walrus",
+		label = "Walrus Hunting Party!",
 		options =	{
 						{description = "On", data = "default"},
 						{description = "Off", data = "off"},
