@@ -15,6 +15,7 @@ assert(TheWorld.ismastersim, "SuperHounded should not exist on client")
 
 local HOUND_SPAWN_DIST = 30
 
+
 local attack_levels=
 {
 	intro={warnduration= function() return 120 end, numhounds = function() return 2 end},
@@ -185,10 +186,11 @@ local function updateWarningString(index)
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Gobbles!!!"
 		elseif prefab == "penguin" then
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Oh no...they think I took their eggs!"
+		elseif prefab == "walrus" then
+			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "The hunter becomes the hunted"
 		else
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = defaultPhrase
 		end
-		
 	end
 end
 --------------------------------------------------------------------------
@@ -196,7 +198,7 @@ end
 --------------------------------------------------------------------------
 self.AddMob = function(self,mob)
 	if self.currentMobs[mob] == nil and mob then
-
+		print("Adding mob " .. tostring(mob.prefab))
 		self.currentMobs[mob] = true
 		self.numMobsSpawned = self.numMobsSpawned + 1
 		-- Listen for death events on these dudes
@@ -298,14 +300,17 @@ self.AddMob = function(self,mob)
 		local index = getIndexByName(mob.prefab)
 		if index and MOB_LIST[index].damageMult then
 			local mult = MOB_LIST[index].damageMult
+			print("Reducing damage by " .. mult)
 			mob.components.combat:SetDefaultDamage(mult*mob.components.combat.defaultdamage)
 		end
 		
 		-- Tweak the health of this mob based on the table
 		if index and MOB_LIST[index].healthMult then
-			local mult = MOB_LIST[index].healthMult
-			mob.components.health:SetMaxHealth(mult*mob.components.health.maxhealth)
+			local healthMult = MOB_LIST[index].healthMult
+			print("Reducing health by " .. healthMult)
+			mob.components.health:SetMaxHealth(healthMult*mob.components.health.maxhealth)
 		end
+
 		
 		-- Tweak the drop rates for the mobs
 		if index and MOB_LIST[index].dropMult then
@@ -401,7 +406,6 @@ end
 local function PlanNextHoundAttack(forceUpdate, prefabIndex)
 	if _timetoattack > 0 and forceUpdate == nil then
 		-- we came in through a savegame that already had an attack scheduled
-		print("nothing to do")
 		return
 	end
 	-- if there are no players then try again later
@@ -411,9 +415,6 @@ local function PlanNextHoundAttack(forceUpdate, prefabIndex)
 		return
 	end
 	
-	-- Reseet this variable
-	warningCount = 1
-
 	if _spawnmode == "escalating" then
 		CalcEscalationLevel()
 	end
@@ -427,17 +428,15 @@ local function PlanNextHoundAttack(forceUpdate, prefabIndex)
     _warning = false
 	
 	-- New Mod functionality
-	print("Modifying next hound attack")
 	-- Pick a random mob from the list
 	if prefabIndex and prefabIndex > 0 and prefabIndex <= #MOB_LIST then
-		print("Prefab selection overwrite")
 		self.currentIndex = prefabIndex
 	else
 		self.currentIndex = getRandomMob()
 	end
-
 	
-	------------------------------------------------------------------------------------------------
+	print("Current mob scheduled: " .. MOB_LIST[self.currentIndex].prefab)
+
 	updateWarningString(self.currentIndex)
 	
 	-- Reset the warning counter
@@ -575,6 +574,7 @@ local function SummonHound(pt)
 	
 	if self.currentIndex == nil then
 		-- Next wave hasn't been planned
+		print("No mob has been planned! Picking random from list")
 		prefab,index = getRandomMob()
 	else 
 		prefab = MOB_LIST[self.currentIndex].prefab
@@ -586,7 +586,7 @@ local function SummonHound(pt)
 		local special_hound_chance = GetSpecialHoundChance()
 		
 		-- If spiders...give a chance at warrior spiders
-		if prefab == "spider" and math.random() < specialMobChance then
+		if prefab == "spider" and math.random() < special_hound_chance then
 			prefab = "spider_warrior"
 		end
 
@@ -598,11 +598,10 @@ local function SummonHound(pt)
 			end
 		end
 		
-		-- TODO: No SeasonManager in DST
-		-- They spawn from lightning!
-		--if prefab == "lightninggoat" then
-		--	GLOBAL.GetSeasonManager():DoMediumLightning()
-		--end
+		-- They spawn from lightning! This lightning is only for show though
+		if prefab == "lightninggoat" then
+			SpawnPrefab("lightning").Transform:SetPosition(spawn_pt:Get())
+		end
 		
 		local theMob = SpawnPrefab(prefab)
 		if theMob then
@@ -617,17 +616,17 @@ local function SummonHound(pt)
 				end
 			end
 			
-			--[[ TODO - Get lightning
+
 			----------------------------------------------------------------------
 			-- If lightning goat...give it a chance to get struck by lightning
 			local exciteGoat = function(self)
 				local goatPos = Vector3(self.Transform:GetWorldPosition())
-				GLOBAL.GetSeasonManager():DoLightningStrike(goatPos)
+				TheWorld:PushEvent("ms_sendlightningstrike",goatPos)
 			end
-			if theMob:HasTag("lightninggoat") and math.random() < (.9*specialMobChance) then
+			if theMob:HasTag("lightninggoat") and math.random() < (.85*special_hound_chance) then
 				theMob:DoTaskInTime(math.max(5,10*math.random()),exciteGoat)
 			end
-			--]]
+			
 			
 			-----------------------------------------------------------------------
 			-- Hunting party is here! Make some friends! Assume the kids don't come.
@@ -799,7 +798,6 @@ end
 
 -- Can override the next hound mob with this index
 function self:PlanNextHoundAttack(index)
-	print("Plan next hound attack override")
 	PlanNextHoundAttack(1,index)
 end
 
@@ -923,12 +921,20 @@ end
 --------------------------------------------------------------------------
 
 function self:OnSave()
+	-- Bundle up the current mob list
+	local _mobs = {}
+	for k,v in pairs(self.currentMobs) do
+		table.insert(_mobs,k.GUID)
+	end
 	return 
 	{
 		warning = _warning,
 		timetoattack = _timetoattack,
 		warnduration = _warnduration,
 		attackplanned = _attackplanned,
+		currentIndex = self.currentIndex,
+        mobs = _mobs,
+		mob_list = MOB_LIST -- Save the current state of this
 	}
 end
 
@@ -937,17 +943,41 @@ function self:OnLoad(data)
 	_warnduration = data.warnduration or 0
 	_timetoattack = data.timetoattack or 0
 	_attackplanned = data.attackplanned  or false
+	
+	local emptyList = {}
+	MOB_LIST = data.mob_list or emptyList
+
+	local index = data.currentIndex or -1
+	print("data.currentIndex: " .. index)
+	self.currentIndex = data.currentIndex or nil
+	
+	
 	if _timetoattack > _warnduration then
 		-- in case everything went out of sync
 		_warning = false
 	end
-	if _attackplanned then
+	if _attackplanned and self.currentIndex ~= nil then
 		if _timetoattack < _warnduration then
 			-- at least give players a fighting chance if we quit during the warning phase
 			_timetoattack = _warnduration + 5
 		end
-	else
+	elseif self.currentIndex == nil then
+		print("Current Index is not set. Planning new hound attack")
 		PlanNextHoundAttack()
+	else
+		updateWarningString(self.currentIndex)
+	end
+end
+
+function self:LoadPostPass(newEnts,savedata)
+	if savedata and savedata.mobs then
+		for k,v in pairs(savedata.mobs) do
+			local targ = newEnts[v]
+			if targ then
+				print("Adding saved mob " .. tostring(targ.entity.prefab) .. " to list")
+				self:AddMob(targ.entity)
+			end
+		end
 	end
 end
 

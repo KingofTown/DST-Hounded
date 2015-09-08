@@ -8,33 +8,32 @@ local ipairs = GLOBAL.ipairs
         prefab: prefab name
         brain: brain name. If a mob has this defined, will add a new PriorityNode to the brain to attack player.
                (leave this out if don't want to override brain function at all)
-        RoG: Is this a Reign of Giants only mob? (Toggles enabled if DLC is not enabled). If not added, assumed to be false.
         CaveState: "open", "used", nil - This mob will only spawn when the cavestate condition is met. If not defined, ignore
         Season: restricts the season(s) this can come. If not defined...can come any season. 
         mobMult: multiplier compared to normal hound values (how many to release)
         timeMult: how fast these come out compared to normal hounds. 0.5 is twice as fast. 2 is half speed.
 		damageMult: how much damage it does compared to normal mob
-        
-        TODO: Have health defined here? It's a bit much fighing one of these sometimes...multiple seems impossible
+		healthMult: how much health it starts with relative to a normal version of it
         
 --]]
 local MOB_LIST =
 {
-    [1]  = {enabled=true,prefab="hound",mobMult=1,timeMult=1},
-    [2]  = {enabled=true,prefab="merm",brain="mermbrain",mobMult=1,timeMult=1},
-    [3]  = {enabled=true,prefab="tallbird",brain="tallbirdbrain",mobMult=.75,timeMult=1.2},
+    [1]  = {enabled=true,prefab="hound"}, -- No changes here...same old hounds
+    [2]  = {enabled=true,prefab="merm",brain="mermbrain",mobMult=1,timeMult=1,healthMult=.5},
+    [3]  = {enabled=true,prefab="tallbird",brain="tallbirdbrain",mobMult=.75,timeMult=1.2,healthMult=.5},
     [4]  = {enabled=true,prefab="pigman",brain="pigbrain",mobMult=1,timeMult=1},
     [5]  = {enabled=true,prefab="spider",brain="spiderbrain",mobMult=1.7,timeMult=.5},
-    [6]  = {enabled=true,prefab="killerbee",brain="killerbeebrain",mobMult=2.2,timeMult=.3},
+    [6]  = {enabled=true,prefab="killerbee",brain="killerbeebrain",mobMult=2.2,timeMult=.1},
     [7]  = {enabled=true,prefab="mosquito",brain="mosquitobrain",mobMult=2.5,timeMult=.15}, 
     [8]  = {enabled=true,prefab="lightninggoat",brain="lightninggoatbrain",mobMult=.75,timeMult=1.25}, 
-    [9]  = {enabled=true,prefab="beefalo",brain="beefalobrain",mobMult=.75,timeMult=1.5},
+    [9]  = {enabled=true,prefab="beefalo",brain="beefalobrain",mobMult=.75,timeMult=1.5,healthMult=.5},
     [10] = {enabled=false,prefab="bat",brain="batbrain",CaveState="open",mobMult=1,timeMult=1}, -- No caves in DST...no bats
-    [11] = {enabled=false,prefab="rook",brain="rookbrain",mobMult=1,timeMult=1}, -- These dudes don't work too well (mostly works, but they get lost)
-    [12] = {enabled=true,prefab="knight",brain="knightbrain",mobMult=1,timeMult=1.5}, 
-    [13] = {enabled=false,prefab="mossling",brain="mosslingbrain",Season={SEASONS.SPRING},mobMult=1,timeMult=1}, -- Needs work. They wont get enraged. Also spawns moosegoose....so yeah
+    [11] = {enabled=false,prefab="rook",brain="rookbrain",mobMult=1,timeMult=1,healthMult=.33}, -- These dudes don't work too well (mostly works, but they get lost)
+    [12] = {enabled=true,prefab="knight",brain="knightbrain",mobMult=1,timeMult=1.5,healthMult=.33}, 
+    [13] = {enabled=false,prefab="mossling",brain="mosslingbrain",Season={SEASONS.SPRING},mobMult=1,timeMult=1,healthMult=.66}, -- Needs work. They wont get enraged. Also spawns moosegoose....so yeah
 	[14] = {enabled=true,prefab="perd",brain="perdbrain",mobMult=2.5,timeMult=.25},
 	[15] = {enabled=true,prefab="penguin",brain="penguinbrain",Season={SEASONS.WINTER},mobMult=2.5,timeMult=.35,damageMult=.5},
+	[16] = {enabled=true,prefab="walrus",brain="walrusbrain",Season={SEASONS.WINTER},mobMult=.33, timeMult=3,healthMult=.5},
 }
 
 -- Override the hounded component with our own
@@ -68,7 +67,6 @@ AddSimPostInit(disableMobs)
 --]]
 local function MakeMobChasePlayer(brain)
 
-
     local function KillKillDieDie(inst)
 		-- Chase for 60 seconds, target distance 60
         return GLOBAL.ChaseAndAttack(inst,60,60)
@@ -88,27 +86,12 @@ local function MakeMobChasePlayer(brain)
        
     -- Tell the brain "Attack the player...unless there is a wall in the way, get that instead"
 	table.insert(brain.bt.root.children, fireindex+1, chaseAndKill)
-	table.insert(brain.bt.root.children, fireindex+1, attackWall)
-
-	-- If the brain already has this...don't add it again. Else, add it to the end
-    local hasAction = false
-    for i,node in ipairs(brain.bt.root.children) do
-        if node.name == "Parallel" and node.children[1].name == "Eat Food" then
-			-- Already eats...don't add it again
-            hasAction = true
-            break
-        end
-    end
-    
+	table.insert(brain.bt.root.children, fireindex+1, attackWall) 
 end
 
--- Insert this brain for each mob that has it defined in MOB_LIST (if DLC allows)
+-- Insert this brain for each mob that has it defined in MOB_LIST
 for k,v in pairs(MOB_LIST) do
-    local skip
-    if v.brain and (not dlcEnabled and v.RoG) then
-        skip = true
-    end
-    if v.brain and not skip then
+    if v.brain then
         AddBrainPostInit(v.brain,MakeMobChasePlayer)
     end
 end
