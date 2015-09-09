@@ -229,16 +229,6 @@ self.AddMob = function(self,mob)
 		-- override the ShouldSleep functions
 		if mob.components.sleeper ~= nil then
 			local sleepFcn = function(self,inst)
-				--[[ Just keep suggesting this mob attacks the player. These are 
-					 merciless killers after all.
-					   "Should I sleep?"
-					   "NO! Attack that guy!"
-					   ...
-					   "Should I sleep?"
-					   "NO! Attack that guy!"
-				--]]
-				-- TODO: Seeing what happens when this is gone.
-				--mob.components.combat:SuggestTarget(GetPlayer())
 				return false
 			end
 			local wakeFcn = function(self,inst)
@@ -249,10 +239,6 @@ self.AddMob = function(self,mob)
 			
 		end
 		
-		-- Pigs might transform! Hmm, beardbunny dudes are werebeasts too
-		if mob.components.werebeast ~= nil then
-			mob:AddTag("SpecialPigman")
-		end
 		
 		-- Override the default KeepTarget for this mob.
 		-- Basically, if it's currently targeting the player, continue to.
@@ -403,7 +389,7 @@ local function CalcPlayerAttackSize(player)
 	return attacksize
 end
 
-local function PlanNextHoundAttack(prefabIndex)
+local function PlanNextHoundAttack(inst,prefabIndex)
 	if _timetoattack > 0 and houndDebug == false then
 		-- we came in through a savegame that already had an attack scheduled
 		return
@@ -628,6 +614,23 @@ local function SummonHound(pt)
 				theMob:DoTaskInTime(math.max(5,10*math.random()),exciteGoat)
 			end
 			
+			local transformWerePig = function(self)
+				local pigPos = Vector3(self.Transform:GetWorldPosition())
+				if self.components.werebeast and pigPos then 
+					SpawnPrefab("lightning").Transform:SetPosition(pigPos:Get())
+					self.components.werebeast:SetWere()
+        
+					-- DST has a bonus multipler for werepig health. Remove this.
+					local curHealth = self.components.health.maxhealth
+					self.components.health:SetMaxHealth(curHealth*.66)
+				end
+				--TODO: Do I need to override the target fcn again?
+			end
+			
+			if theMob:HasTag("pig") and math.random() < (.85*special_hound_chance) then
+				theMob:DoTaskInTime(math.max(5,10*math.random()),transformWerePig)
+			end
+			
 			
 			-----------------------------------------------------------------------
 			-- Hunting party is here! Make some friends! Assume the kids don't come.
@@ -801,7 +804,7 @@ end
 function self:PlanNextHoundAttack(index)
 	print("PlanNextHoundAttack with override")
 	houndDebug=true
-	PlanNextHoundAttack(index)
+	PlanNextHoundAttack(nil,index)
 end
 
 function self:StartAttack(tt)
@@ -941,6 +944,7 @@ function self:OnSave()
 	}
 end
 
+function self:OnLoad(data)
 	_warning = data.warning or false
 	_warnduration = data.warnduration or 0
 	_timetoattack = data.timetoattack or 0
