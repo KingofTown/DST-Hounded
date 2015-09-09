@@ -403,8 +403,8 @@ local function CalcPlayerAttackSize(player)
 	return attacksize
 end
 
-local function PlanNextHoundAttack(forceUpdate, prefabIndex)
-	if _timetoattack > 0 and forceUpdate == nil then
+local function PlanNextHoundAttack(prefabIndex)
+	if _timetoattack > 0 and houndDebug == false then
 		-- we came in through a savegame that already had an attack scheduled
 		return
 	end
@@ -430,6 +430,7 @@ local function PlanNextHoundAttack(forceUpdate, prefabIndex)
 	-- New Mod functionality
 	-- Pick a random mob from the list
 	if prefabIndex and prefabIndex > 0 and prefabIndex <= #MOB_LIST then
+		print("Using supplied index " .. prefabIndex)
 		self.currentIndex = prefabIndex
 	else
 		self.currentIndex = getRandomMob()
@@ -798,7 +799,9 @@ end
 
 -- Can override the next hound mob with this index
 function self:PlanNextHoundAttack(index)
-	PlanNextHoundAttack(1,index)
+	print("PlanNextHoundAttack with override")
+	houndDebug=true
+	PlanNextHoundAttack(index)
 end
 
 function self:StartAttack(tt)
@@ -938,7 +941,6 @@ function self:OnSave()
 	}
 end
 
-function self:OnLoad(data)
 	_warning = data.warning or false
 	_warnduration = data.warnduration or 0
 	_timetoattack = data.timetoattack or 0
@@ -974,7 +976,6 @@ function self:LoadPostPass(newEnts,savedata)
 		for k,v in pairs(savedata.mobs) do
 			local targ = newEnts[v]
 			if targ then
-				print("Adding saved mob " .. tostring(targ.entity.prefab) .. " to list")
 				self:AddMob(targ.entity)
 			end
 		end
