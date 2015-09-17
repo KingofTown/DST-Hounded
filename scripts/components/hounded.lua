@@ -173,9 +173,9 @@ local function updateWarningString(index)
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Those giant dark clouds look ominous"
 		elseif prefab == "beefalo" then
 			if warningCount == 1 then
-				STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Earthquake?!?"
+				STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Do you feel that?"
 			else
-				STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Wait, no...STAMPEDE!!!"
+				STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "The ground is shaking!"
 			end
 		elseif prefab == "bat" then
 			-- TODO: Increment the count each warning lol
@@ -198,7 +198,6 @@ end
 --------------------------------------------------------------------------
 self.AddMob = function(self,mob)
 	if self.currentMobs[mob] == nil and mob then
-		print("Adding mob " .. tostring(mob.prefab))
 		self.currentMobs[mob] = true
 		self.numMobsSpawned = self.numMobsSpawned + 1
 		-- Listen for death events on these dudes
@@ -286,14 +285,12 @@ self.AddMob = function(self,mob)
 		local index = getIndexByName(mob.prefab)
 		if index and MOB_LIST[index].damageMult then
 			local mult = MOB_LIST[index].damageMult
-			print("Reducing damage by " .. mult)
 			mob.components.combat:SetDefaultDamage(mult*mob.components.combat.defaultdamage)
 		end
 		
 		-- Tweak the health of this mob based on the table
 		if index and MOB_LIST[index].healthMult then
 			local healthMult = MOB_LIST[index].healthMult
-			print("Reducing health by " .. healthMult)
 			mob.components.health:SetMaxHealth(healthMult*mob.components.health.maxhealth)
 		end
 
@@ -330,6 +327,34 @@ self.RemoveMob = function(self,mob)
 		self.numMobsSpawned = self.numMobsSpawned - 1
 	end
 end
+
+-- Create some quake effects
+self.quakeMachine.WarnQuake = function(self, duration, speed, scale)
+						 -- type,duration,speed,scale,maxdist
+	-- Do this for all players
+	TheCamera:Shake("FULL", duration, speed, scale, 80)
+	
+	-- Increase the intensity for the next call (only start the sound once)
+	if not self.quakeStarted then
+		self.SoundEmitter:PlaySound("dontstarve/cave/earthquake", "earthquake")
+		self.quakeStarted = true
+	end
+	self.SoundEmitter:SetParameter("earthquake", "intensity", self.soundIntensity)
+end
+
+self.quakeMachine.EndQuake = function(self)
+	self.quakeStarted = false
+	self.SoundEmitter:KillSound("earthquake")
+	self.soundIntensity = 0.01
+	self.quakeStarted = false
+end
+
+ 
+self.quakeMachine.MakeStampedeLouder = function(self)
+        self.soundIntensity = self.soundIntensity + .04
+        self.SoundEmitter:SetParameter("earthquake","intensity",self.soundIntensity)
+end
+
 
 
 --------------------------------------------------------------------------
@@ -639,7 +664,7 @@ local function SummonHound(pt)
 				local leader = theMob
 				for i=1,numHounds do
 					print("Releasing pet hound")
-					hound = GLOBAL.SpawnPrefab("icehound")
+					hound = SpawnPrefab("icehound")
 					if hound then
 						-- TODO: These won't persist as followers...
 						self:AddMob(hound)
@@ -909,6 +934,8 @@ function self:OnUpdate(dt)
             if _announcewarningsoundinterval <= 0 then
                 _announcewarningsoundinterval = 10 + math.random(5)
                 self:DoWarningSpeech()
+				warningCount = warningCount+1
+				updateWarningString(self.currentIndex)
             end
 
             _timetonextwarningsound =
@@ -917,9 +944,36 @@ function self:OnUpdate(dt)
                 (_timetoattack < 90 and 4 + math.random(2)) or
                                         5 + math.random(4)
             self:DoWarningSound()
-			warningCount = warningCount+1
+			
         end
     end
+	
+	
+	-- If beefalo are coming, start the stampede effects
+	-- TODO: This doesn't work yet. 
+	if false and MOB_LIST[self.currentIndex].prefab == "beefalo" then
+		if _timetoattack < _warnduration and _timetoattack > 0 and not self.quakeMachine.quakeStarted then
+			print("Starting quake effects")
+			-- This is kind of hackey...but i want the quake to INCREASE over time, not decrease. 
+			-- The camerashake only has functions that decrease...            
+			local interval = _timetoattack / 2
+
+			--self.quakeMachine:DoTaskInTime(0, function(self) self:WarnQuake(interval*2, .015, .1) end)
+			self.quakeMachine:WarnQuake(interval*2,.015,.1)
+			-- Camera shake decreases in intensity as it goes on...but I want it to INCREASE!!
+			self.quakeMachine:DoTaskInTime(1*interval, function(self) self:WarnQuake(interval*2, .02, .1) end)
+			self.quakeMachine:DoTaskInTime(2*interval, function(self) self:WarnQuake(interval*2, .025, .1) end)
+			self.quakeMachine.quakeStarted = true
+			
+			local interval = _timetoattack/5
+			for i=1, 5 do
+				self.quakeMachine:DoTaskInTime(i*interval, function(self) self:MakeStampedeLouder() end)
+			end
+			
+			-- Schedule quake to end
+			self.quakeMachine:DoTaskInTime(_timetoattack+5, function(self) self:EndQuake() end)
+		end
+	end
 end
 
 --------------------------------------------------------------------------
@@ -999,11 +1053,12 @@ end
 --------------------------------------------------------------------------
 
 function self:GetDebugString()
-	for k,v in pairs(MOB_LIST) do
-		print(k,v)
-	end
 	if _timetoattack > 0 then
-		return string.format("%s hounds are coming in %2.2f", _warning and "WARNING" or "WAITING",   _timetoattack)
+		if self.currentIndex then
+			return string.format("%s %s are coming in %2.2f", _warning and "WARNING" or "WAITING", MOB_LIST[self.currentIndex].prefab,  _timetoattack)
+		else
+			return string.format("No mob selected yet...")
+		end
 	else	
 		local s = "ATTACKING\n"
 		for i, spawninforec in ipairs(_spawninfo) do
@@ -1013,6 +1068,17 @@ function self:GetDebugString()
 			end
 		end
 		return s
+	end
+end
+
+function self:GetDebugSupplies()
+	for i,v in ipairs(AllPlayers) do
+		local playerPos = Vector3(v.Transform:GetWorldPosition())
+		if playerPos then
+			SpawnPrefab("armorwood").Transform:SetPosition(playerPos:Get())
+			SpawnPrefab("spear").Transform:SetPosition(playerPos:Get())
+			SpawnPrefab("footballhat").Transform:SetPosition(playerPos:Get())
+		end
 	end
 end
 
