@@ -146,12 +146,18 @@ end
 
 -- This is called after each verbal warning. 
 local function updateWarningString(index)
-	print("Updating strings")
+		
+	--print("Updating strings")
 	-- For each player, update the warning string.
 	for i,v in ipairs(AllPlayers) do
 		local character = string.upper(v.prefab)
 		if character == nil or character == "WILSON" then
 			character = "GENERIC"
+		end
+		
+		if not index then
+			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "I'm...not sure what that sound is..."
+			return
 		end
 	
 		local prefab = MOB_LIST[index].prefab
@@ -582,12 +588,16 @@ local function SummonHound(pt)
 		
 	local spawn_pt = GetSpawnPoint(pt)
 	
-	local prefab = ""
+	local prefab,index = "",0
 	
 	if self.currentIndex == nil then
 		-- Next wave hasn't been planned
 		print("No mob has been planned! Picking random from list")
-		prefab,index = getRandomMob()
+		local index = getRandomMob()
+		if index then
+			self.currentIndex = index
+			prefab = MOB_LIST[self.currentIndex].prefab
+		end
 	else 
 		prefab = MOB_LIST[self.currentIndex].prefab
 	end
@@ -870,10 +880,18 @@ function self:OnUpdate(dt)
 	if #_activeplayers == 0  or not _attackplanned then
 		return
 	end
+	
 
 	_timetoattack = _timetoattack - dt
 
 	if _timetoattack < 0 then
+	
+		-- Somehow this is nil. This should never be nil! 
+		-- Generate a new random one at this point
+		if self.currentIndex == nil then
+			self.currentIndex = getRandomMob()
+		end
+	
 		-- Okay, it's hound-day, get number of dogs for each player
 		if not _spawninfo then
 			GetHoundAmounts()
