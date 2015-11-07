@@ -674,7 +674,7 @@ local function SummonHound(pt)
 				local leader = theMob
 				for i=1,numHounds do
 					print("Releasing pet hound")
-					hound = SpawnPrefab("icehound")
+					local hound = SpawnPrefab("icehound")
 					if hound then
 						-- TODO: These won't persist as followers...
 						self:AddMob(hound)
