@@ -583,6 +583,73 @@ local function GetSpecialHoundChance()
 	return chance
 end
 
+-- Transforms a mob to an ice/fire version.
+-- Copies the ice/fire hound ondeath and gives
+-- a special drop. 
+-- Also changes the color.
+local function makeMobSpecial(theMob, specialStats)
+
+   -- Increase damage and decrease health
+   local health = theMob.components.health.maxhealth
+   theMob.components.health:SetMaxHealth(health*.66)
+   
+   local damage = theMob.components.combat.defaultdamage
+   theMob.components.combat:SetDefaultDamage(damage*1.35)
+   
+   -- Add onDeath triggers
+   if specialStats == "ice" then
+      theMob.AnimState:SetMultColour(.1,.1,1,1)
+	  -- only set the ondeath in the sim
+	  --if not TheWorld.ismastersim then
+      --  return
+      --end
+      theMob:ListenForEvent("death", function(inst)
+      
+		  if not inst.components.freezable then
+			  -- Eh...it won't be there long enough to show this. This is
+			  -- just to set up the FX.
+			  MakeMediumFreezableCharacter(inst, "hound_body")
+		  end
+		  inst.components.freezable:SpawnShatterFX()
+		  inst:RemoveComponent("freezable")
+		  local x,y,z = inst.Transform:GetWorldPosition()
+		  local ents = TheSim:FindEntities(x, y, z, 4, {"freezable"}, {"FX", "NOCLICK","DECOR","INLIMBO"}) 
+		  for i,v in pairs(ents) do
+			  if v.components.freezable then
+				  v.components.freezable:AddColdness(2)
+			  end
+		  end
+           
+           
+           -- Also drop a gem!
+           if math.random() < .3 then
+              inst.components.lootdropper:SpawnLootPrefab("bluegem")
+           end
+   
+           inst.SoundEmitter:PlaySound("dontstarve/creatures/hound/icehound_explo", "explosion")
+      end)
+   else
+      theMob.AnimState:SetMultColour(1,.25,.25,1)
+	  -- Only set the ondeath in the sim
+	  --if not TheWorld.ismastersim then
+      --  return
+      --end
+      theMob:ListenForEvent("death", function(inst)
+         if math.random() < .3 then
+            inst.components.lootdropper:SpawnLootPrefab("redgem")
+         end
+         
+         -- Make some fire!
+         for k=1,3 do
+            inst.components.lootdropper:SpawnLootPrefab("houndfire")
+         end
+         
+         inst.SoundEmitter:PlaySound("dontstarve/creatures/hound/firehound_explo", "explosion")
+      
+      end)
+   end
+end
+
 local function SummonHound(pt)
 	assert(pt)
 		
@@ -605,18 +672,29 @@ local function SummonHound(pt)
 	if spawn_pt then
 		
 		--local prefab = "hound"
-		local special_hound_chance = GetSpecialHoundChance()
+		local specialStats = nil
+		local special_hound_chance = self.debugSpawn and 1 or GetSpecialHoundChance()
 		
 		-- If spiders...give a chance at warrior spiders
 		if prefab == "spider" and math.random() < special_hound_chance then
 			prefab = "spider_warrior"
 		end
 
-		if prefab == "hound" and math.random() < special_hound_chance then
+		local chanceMod = MOB_LIST[self.currentIndex].mobMult or 1
+		if math.random() < special_hound_chance/chanceMod then
+		--if prefab == "hound" and math.random() < special_hound_chance then
 		    if TheWorld.state.iswinter or TheWorld.state.isspring then
-		        prefab = "icehound"
+		          if prefab == "hound" then
+                     prefab = "icehound"
+                  else
+                     specialStats = "ice"
+                  end
 		    else
-			    prefab = "firehound"
+			      if prefab == "hound" then
+                     prefab = "firehound"
+                  else
+                     specialStats = "fire"
+                  end
 			end
 		end
 		
@@ -629,6 +707,10 @@ local function SummonHound(pt)
 		if theMob then
 			-- give the mob its special sauce
 			self:AddMob(theMob)
+			
+			if specialStats then
+				makeMobSpecial(theMob,specialStats)
+            end
 			
 			-- Mosquitos should have a random fill rate instead of all being at 0
 			if theMob:HasTag("mosquito") then
