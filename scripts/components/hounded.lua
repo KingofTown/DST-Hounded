@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------
---[[ SuperHounded class definition ]]
+--[[ Hounded class definition ]]
 --------------------------------------------------------------------------
 
 --[[
@@ -13,23 +13,26 @@ return Class(function(self, inst)
 
 assert(TheWorld.ismastersim, "SuperHounded should not exist on client")
 
-local HOUND_SPAWN_DIST = 30
+--------------------------------------------------------------------------
+--[[ Constants ]]
+--------------------------------------------------------------------------
 
+local SPAWN_DIST = 30
 
-local attack_levels=
+local attack_levels =
 {
-	intro={warnduration= function() return 120 end, numhounds = function() return 2 end},
-	light={warnduration= function() return 60 end, numhounds = function() return 2 + math.random(2) end},
-	med={warnduration= function() return 45 end, numhounds = function() return 3 + math.random(3) end},
-	heavy={warnduration= function() return 30 end, numhounds = function() return 4 + math.random(3) end},
-	crazy={warnduration= function() return 30 end, numhounds = function() return 6 + math.random(4) end},
+	intro	=	{ warnduration = function() return 120 end, numspawns = function() return 2 end },
+	light	=	{ warnduration = function() return 60 end, numspawns = function() return 2 + math.random(2) end },
+	med		=	{ warnduration = function() return 45 end, numspawns = function() return 3 + math.random(3) end },
+	heavy	=	{ warnduration = function() return 30 end, numspawns = function() return 4 + math.random(3) end },
+	crazy	=	{ warnduration = function() return 30 end, numspawns = function() return 6 + math.random(4) end },
 }
 
-local attack_delays=
+local attack_delays =
 {
-	rare = function() return TUNING.TOTAL_DAY_TIME * 6, math.random() * TUNING.TOTAL_DAY_TIME * 7 end,
-	occasional = function() return TUNING.TOTAL_DAY_TIME * 4, math.random() * TUNING.TOTAL_DAY_TIME * 7 end,
-	frequent = function() return TUNING.TOTAL_DAY_TIME * 3, math.random() * TUNING.TOTAL_DAY_TIME * 5 end,
+	rare		= function() return TUNING.TOTAL_DAY_TIME * 6, math.random() * TUNING.TOTAL_DAY_TIME * 7 end,
+	occasional	= function() return TUNING.TOTAL_DAY_TIME * 4, math.random() * TUNING.TOTAL_DAY_TIME * 7 end,
+	frequent	= function() return TUNING.TOTAL_DAY_TIME * 3, math.random() * TUNING.TOTAL_DAY_TIME * 5 end,
 }
 
 --------------------------------------------------------------------------
@@ -48,12 +51,6 @@ local _attackplanned = false
 local _timetonextwarningsound = 0
 local _announcewarningsoundinterval = 4
 
-local _attackdelayfn = attack_delays.occasional
-local _attacksizefn = attack_levels.light.numhounds
-local _warndurationfn = attack_levels.light.warnduration
-local _spawnmode = "escalating"
-local _spawninfo = nil
-
 --Mod Private variables
 local MOB_LIST = {}
 local warningCount = 1
@@ -71,6 +68,48 @@ self.currentIndex = nil
 
 self.currentMobs = {}
 self.numMobsSpawned = 0
+
+
+
+--Configure this data using hounded:SetSpawnData
+local _spawndata =
+	{
+		base_prefab = "hound",
+		winter_prefab = "icehound",
+		summer_prefab = "firehound",
+
+		attack_levels =
+		{
+			intro 	= { warnduration = function() return 120 end, numspawns = function() return 2 end },
+			light 	= { warnduration = function() return 60 end, numspawns = function() return 2 + math.random(2) end },
+			med 	= { warnduration = function() return 45 end, numspawns = function() return 3 + math.random(3) end },
+			heavy 	= { warnduration = function() return 30 end, numspawns = function() return 4 + math.random(3) end },
+			crazy 	= { warnduration = function() return 30 end, numspawns = function() return 6 + math.random(4) end },
+		},
+
+		attack_delays =
+		{
+			rare 		= function() return TUNING.TOTAL_DAY_TIME * 6, math.random() * TUNING.TOTAL_DAY_TIME * 7 end,
+			occasional 	= function() return TUNING.TOTAL_DAY_TIME * 4, math.random() * TUNING.TOTAL_DAY_TIME * 7 end,
+			frequent 	= function() return TUNING.TOTAL_DAY_TIME * 3, math.random() * TUNING.TOTAL_DAY_TIME * 5 end,
+		},
+
+		warning_speech = "ANNOUNCE_HOUND",
+		warning_sound_thresholds =
+		{	--Key = time, Value = sound prefab
+			{time = 30, sound = "houndwarning_lvl4"},
+			{time = 60, sound = "houndwarning_lvl3"},
+			{time = 90, sound = "houndwarning_lvl2"},
+			{time = 500, sound = "houndwarning_lvl1"},
+		},
+	}
+
+local _attackdelayfn = _spawndata.attack_delays.occasional
+local _attacksizefn = _spawndata.attack_levels.light.numspawns
+local _warndurationfn = _spawndata.attack_levels.light.warnduration
+local _spawnmode = "escalating"
+local _spawninfo = nil
+
 
 --------------------------------------------------------------------------
 --[[ Mod Private Functions ]]
@@ -362,7 +401,6 @@ self.quakeMachine.MakeStampedeLouder = function(self)
 end
 
 
-
 --------------------------------------------------------------------------
 --[[ Private member functions ]]
 --------------------------------------------------------------------------
@@ -370,7 +408,7 @@ end
 local function GetAveragePlayerAgeInDays()
 	local sum = 0
 	for i,v in ipairs(_activeplayers) do
-		sum = sum + v.components.age:GetAgeInDays()		
+		sum = sum + v.components.age:GetAgeInDays()
 	end
 	local average = sum / #_activeplayers
 	return average
@@ -378,49 +416,49 @@ end
 
 local function CalcEscalationLevel()
 	local day = GetAveragePlayerAgeInDays()
-	
+
 	if day < 10 then
-		_attackdelayfn = attack_delays.rare
-		_attacksizefn = attack_levels.intro.numhounds
-		_warndurationfn = attack_levels.intro.warnduration
+		_attackdelayfn = _spawndata.attack_delays.rare
+		_attacksizefn = _spawndata.attack_levels.intro.numspawns
+		_warndurationfn = _spawndata.attack_levels.intro.warnduration
 	elseif day < 25 then
-		_attackdelayfn = attack_delays.rare
-		_attacksizefn = attack_levels.light.numhounds
-		_warndurationfn = attack_levels.light.warnduration
+		_attackdelayfn = _spawndata.attack_delays.rare
+		_attacksizefn = _spawndata.attack_levels.light.numspawns
+		_warndurationfn = _spawndata.attack_levels.light.warnduration
 	elseif day < 50 then
-		_attackdelayfn = attack_delays.occasional
-		_attacksizefn = attack_levels.med.numhounds
-		_warndurationfn = attack_levels.med.warnduration
+		_attackdelayfn = _spawndata.attack_delays.occasional
+		_attacksizefn = _spawndata.attack_levels.med.numspawns
+		_warndurationfn = _spawndata.attack_levels.med.warnduration
 	elseif day < 100 then
-		_attackdelayfn = attack_delays.occasional
-		_attacksizefn = attack_levels.heavy.numhounds
-		_warndurationfn = attack_levels.heavy.warnduration
+		_attackdelayfn = _spawndata.attack_delays.occasional
+		_attacksizefn = _spawndata.attack_levels.heavy.numspawns
+		_warndurationfn = _spawndata.attack_levels.heavy.warnduration
 	else
-		_attackdelayfn = attack_delays.frequent
-		_attacksizefn = attack_levels.crazy.numhounds
-		_warndurationfn = attack_levels.crazy.warnduration
+		_attackdelayfn = _spawndata.attack_delays.frequent
+		_attacksizefn = _spawndata.attack_levels.crazy.numspawns
+		_warndurationfn = _spawndata.attack_levels.crazy.warnduration
 	end
-	
+
 end
 
 local function CalcPlayerAttackSize(player)
 	local day = player.components.age:GetAgeInDays()
-	local attacksize = 0	
+	local attacksize = 0
 	if day < 10 then
-		attacksize = attack_levels.intro.numhounds()
+		attacksize = _spawndata.attack_levels.intro.numspawns()
 	elseif day < 25 then
-		attacksize = attack_levels.light.numhounds()
+		attacksize = _spawndata.attack_levels.light.numspawns()
 	elseif day < 50 then
-		attacksize = attack_levels.med.numhounds()
+		attacksize = _spawndata.attack_levels.med.numspawns()
 	elseif day < 100 then
-		attacksize = attack_levels.heavy.numhounds()
+		attacksize = _spawndata.attack_levels.heavy.numspawns()
 	else
-		attacksize= attack_levels.crazy.numhounds()
+		attacksize = _spawndata.attack_levels.crazy.numspawns()
 	end
 	return attacksize
 end
 
-local function PlanNextHoundAttack(inst,prefabIndex)
+local function PlanNextAttack(inst,prefabIndex)
 	if _timetoattack > 0 and houndDebug == false then
 		-- we came in through a savegame that already had an attack scheduled
 		return
@@ -428,7 +466,7 @@ local function PlanNextHoundAttack(inst,prefabIndex)
 	-- if there are no players then try again later
 	if #_activeplayers == 0 then
 		_attackplanned = false
-		self.inst:DoTaskInTime(1, PlanNextHoundAttack)
+		self.inst:DoTaskInTime(1, PlanNextAttack)
 		return
 	end
 	
@@ -465,7 +503,7 @@ local GROUP_DIST = 20
 local EXP_PER_PLAYER = 0.05
 local ZERO_EXP = 1 - EXP_PER_PLAYER -- just makes the math a little easier
 
-local function GetHoundAmounts()
+local function GetWaveAmounts()
 
 	-- first bundle up the players into groups based on proximity
 	-- we want to send slightly reduced hound waves when players are clumped so that
@@ -502,20 +540,20 @@ local function GetHoundAmounts()
 		local attackdelaybase, attackdelayvariance =  _attackdelayfn()
 
 		-- amount of hounds relative to our age
-		local houndsToRelease = CalcPlayerAttackSize(player)
+		local spawnsToRelease = CalcPlayerAttackSize(player)
 		local playerInGame = GetTime() - player.components.age.spawntime
 
 		-- if we never saw a warning or have lived shorter than the minimum wave delay then don't spawn hounds to us
 		if not houndDebug and (playerInGame <= _warnduration or playerAge < attackdelaybase) then
 			print("Not releasing hounds for this n00b")
-			houndsToRelease = 0
+			spawnsToRelease = 0
 		end
 
 		if _spawninfo[group] == nil then
-			_spawninfo[group] = {players = {player}, houndstorelease = houndsToRelease, timetonexthound = 0, totalplayerage=playerAge}
+			_spawninfo[group] = {players = {player}, spawnstorelease = spawnsToRelease, timetonext = 0, totalplayerage=playerAge}
 		else
 			table.insert(_spawninfo[group].players, player)
-			_spawninfo[group].houndstorelease = _spawninfo[group].houndstorelease + houndsToRelease
+			_spawninfo[group].spawnstorelease = _spawninfo[group].spawnstorelease + spawnsToRelease
 			_spawninfo[group].totalplayerage = _spawninfo[group].totalplayerage + playerAge
 		end
 	end
@@ -532,17 +570,17 @@ local function GetHoundAmounts()
 		-- pow the number of hounds by a fractional exponent, to stave off huge groups
 		-- e.g. hounds ^ 1/1.1 for three players
 		local groupexp = 1.0 / (ZERO_EXP + (EXP_PER_PLAYER * #info.players))
-		info.houndstorelease = RoundBiasedDown(math.pow(info.houndstorelease, groupexp))
+		info.spawnstorelease = RoundBiasedDown(math.pow(info.spawnstorelease, groupexp))
 		
 		-- Now modify for the mob multiplier
 		-----------------------------------------------------------------
 		-- Always spawn at least 1 (unless there were 0 planned for this player)
-		if info.houndstorelease > 0 then
-			local numHounds = math.max(1,info.houndstorelease*mult)
-			print("Adjusting hounds from " .. info.houndstorelease .. " to " .. numHounds)
+		if info.spawnstorelease > 0 then
+			local numHounds = math.max(1,info.spawnstorelease*mult)
+			print("Adjusting hounds from " .. info.spawnstorelease .. " to " .. numHounds)
 			-- Round to nearest int
-			info.houndstorelease = numHounds % 1 >= .5 and math.ceil(numHounds) or math.floor(numHounds)
-			--print("Next Attack: " .. self.houndstorelease .. " " .. MOB_LIST[self.currentIndex].prefab)
+			info.spawnstorelease = numHounds % 1 >= .5 and math.ceil(numHounds) or math.floor(numHounds)
+			--print("Next Attack: " .. self.spawnsstorelease .. " " .. MOB_LIST[self.currentIndex].prefab)
 		end
 		
 		-----------------------------------------------------------------
@@ -557,7 +595,7 @@ end
 local function GetSpawnPoint(pt)
 
     local theta = math.random() * 2 * PI
-    local radius = HOUND_SPAWN_DIST
+    local radius = SPAWN_DIST
 
 	local offset = FindWalkableOffset(pt, theta, radius, 12, true)
 	if offset then
@@ -565,7 +603,7 @@ local function GetSpawnPoint(pt)
 	end
 end
 
-local function GetSpecialHoundChance()
+local function GetSpecialSpawnChance()
 	local day = GetAveragePlayerAgeInDays()
 	local chance = 0
 	for k,v in ipairs(TUNING.HOUND_SPECIAL_CHANCE) do
@@ -579,7 +617,7 @@ local function GetSpecialHoundChance()
 	if TheWorld.state.issummer then
 		chance = chance * 1.5
 	end
-	
+
 	return chance
 end
 
@@ -650,9 +688,9 @@ local function makeMobSpecial(theMob, specialStats)
    end
 end
 
-local function SummonHound(pt)
+local function SummonSpawn(pt)
 	assert(pt)
-		
+
 	local spawn_pt = GetSpawnPoint(pt)
 	
 	local prefab,index = "",0
@@ -673,7 +711,7 @@ local function SummonHound(pt)
 		
 		--local prefab = "hound"
 		local specialStats = nil
-		local special_hound_chance = self.debugSpawn and 1 or GetSpecialHoundChance()
+		local special_hound_chance = self.debugSpawn and 1 or GetSpecialSpawnChance()
 		
 		-- If spiders...give a chance at warrior spiders
 		if prefab == "spider" and math.random() < special_hound_chance then
@@ -780,12 +818,12 @@ local function SummonHound(pt)
 	end
 end
 
-local function ReleaseHound(target)
+local function ReleaseSpawn(target)
 	local pt = Vector3(target.Transform:GetWorldPosition())
-	
-	local hound = SummonHound(pt)
-	if hound then
-		hound.components.combat:SuggestTarget(target)
+
+	local spawn = SummonSpawn(pt)
+	if spawn then
+		spawn.components.combat:SuggestTarget(target)
 		return true
 	end
 
@@ -840,7 +878,7 @@ inst:ListenForEvent("ms_playerjoined", OnPlayerJoined, TheWorld)
 inst:ListenForEvent("ms_playerleft", OnPlayerLeft, TheWorld)
 
 self.inst:StartUpdatingComponent(self)
-PlanNextHoundAttack()
+PlanNextAttack()
 
 --------------------------------------------------------------------------
 --[[ Public getters and setters ]]
@@ -858,61 +896,65 @@ function self:GetAttacking()
 	return ((_timetoattack <= 0) and _attackplanned)
 end
 
+function self:SetSpawnData(data)
+	_spawndata = data
+end
+
 --------------------------------------------------------------------------
 --[[ Public member functions ]]
 --------------------------------------------------------------------------
 
 function self:SpawnModeEscalating()
 	_spawnmode = "escalating"
-	PlanNextHoundAttack()
+	PlanNextAttack()
 end
 
 function self:SpawnModeNever()
 	_spawnmode = "never"
-	PlanNextHoundAttack()
+	PlanNextAttack()
 end
 
 function self:SpawnModeHeavy()
 	_spawnmode = "constant"
-	_attackdelayfn = attack_delays.frequent
-	_attacksizefn = attack_levels.heavy.numhounds
-	_warndurationfn = attack_levels.heavy.warnduration
-	PlanNextHoundAttack()
+	_attackdelayfn = _spawndata.attack_delays.frequent
+	_attacksizefn = _spawndata.attack_levels.heavy.numspawns
+	_warndurationfn = _spawndata.attack_levels.heavy.warnduration
+	PlanNextAttack()
 end
 
 function self:SpawnModeMed()
 	_spawnmode = "constant"
-	_attackdelayfn = attack_delays.occasional
-	_attacksizefn = attack_levels.med.numhounds
-	_warndurationfn = attack_levels.med.warnduration
-	PlanNextHoundAttack()
+	_attackdelayfn = _spawndata.attack_delays.occasional
+	_attacksizefn = _spawndata.attack_levels.med.numspawns
+	_warndurationfn = _spawndata.attack_levels.med.warnduration
+	PlanNextAttack()
 end
 
 function self:SpawnModeLight()
 	_spawnmode = "constant"
-	_attackdelayfn = attack_delays.rare
-	_attacksizefn = attack_levels.light.numhounds
-	_warndurationfn = attack_levels.light.warnduration
-	PlanNextHoundAttack()
+	_attackdelayfn = _spawndata.attack_delays.rare
+	_attacksizefn = _spawndata.attack_levels.light.numspawns
+	_warndurationfn = _spawndata.attack_levels.light.warnduration
+	PlanNextAttack()
 end
 
 -- Releases a hound near and attacking 'target'
-function self:ForceReleaseHound(target)
+function self:ForceReleaseSpawn(target)
 	if target then
-		ReleaseHound(target)
+		ReleaseSpawn(target)
 	end
 end
 
 -- Creates a hound near 'pt'
-function self:SummonHound(pt)
+function self:SummonSpawn(pt)
 	if pt then
-		return SummonHound(pt)
+		return SummonSpawn(pt)
 	end
 end
 
 -- Spawns the next wave for debugging
-function self:ForceNextHoundWave()
-	PlanNextHoundAttack()
+function self:ForceNextWave()
+	PlanNextAttack()
 	_timetoattack = 0
 	self:OnUpdate(1)
 end
@@ -921,7 +963,7 @@ end
 function self:PlanNextHoundAttack(index)
 	print("PlanNextHoundAttack with override")
 	houndDebug=true
-	PlanNextHoundAttack(nil,index)
+	PlanNextAttack(nil,index)
 end
 
 function self:StartAttack(tt)
@@ -932,7 +974,7 @@ function self:StartAttack(tt)
 end
 
 local function _DoWarningSpeech(player)
-    player.components.talker:Say(GetString(player, "ANNOUNCE_HOUNDS"))
+    player.components.talker:Say(GetString(player, _spawndata.warning_speech))
 end
 
 function self:DoWarningSpeech()
@@ -942,27 +984,22 @@ function self:DoWarningSpeech()
 end
 
 function self:DoWarningSound()
-    --All players hear their own warning sound from a random
-    --random direction relative to their own local positions
-    SpawnPrefab("houndwarning_lvl"..
-        (((_timetoattack == nil or
-        _timetoattack < 30) and "4") or
-        (_timetoattack < 60 and "3") or
-        (_timetoattack < 90 and "2") or
-                                "1")
-    )
+    for k,v in pairs(_spawndata.warning_sound_thresholds) do
+    	if _timetoattack <= v.time or _timetoattack == nil then
+    		SpawnPrefab(v.sound)
+    	end
+    end
 end
 
 function self:OnUpdate(dt)
 	if _spawnmode == "never" then
 		return
 	end
-	
+
 	-- if there's no players, then don't even try
 	if #_activeplayers == 0  or not _attackplanned then
 		return
 	end
-	
 
 	_timetoattack = _timetoattack - dt
 
@@ -976,39 +1013,38 @@ function self:OnUpdate(dt)
 	
 		-- Okay, it's hound-day, get number of dogs for each player
 		if not _spawninfo then
-			GetHoundAmounts()
+			GetWaveAmounts()
 		end
 
 		_warning = false
 
-		local playersdone = {}		
+		local playersdone = {}
 		for i,spawninforec in ipairs(_spawninfo) do
-			spawninforec.timetonexthound = spawninforec.timetonexthound - dt		
-		
-			if spawninforec.houndstorelease > 0 and spawninforec.timetonexthound < 0 then
+			spawninforec.timetonext = spawninforec.timetonext - dt
+			if spawninforec.spawnstorelease > 0 and spawninforec.timetonext < 0 then
 				-- hounds can attack anyone in the group, even new players.
 				-- That's the risk you take!
 				local playeridx = math.random(#spawninforec.players)
-				ReleaseHound(spawninforec.players[playeridx]) 
-				spawninforec.houndstorelease = spawninforec.houndstorelease - 1
+				ReleaseSpawn(spawninforec.players[playeridx])
+				spawninforec.spawnstorelease = spawninforec.spawnstorelease - 1
 
 				local day = spawninforec.averageplayerage / TUNING.TOTAL_DAY_TIME
 				if day < 20 then
-					spawninforec.timetonexthound = 3 + math.random()*5
+					spawninforec.timetonext = 3 + math.random()*5
 				elseif day < 60 then
-					spawninforec.timetonexthound = 2 + math.random()*3
+					spawninforec.timetonext = 2 + math.random()*3
 				elseif day < 100 then
-					spawninforec.timetonexthound = .5 + math.random()*3
+					spawninforec.timetonext = .5 + math.random()*3
 				else
-					spawninforec.timetonexthound = .5 + math.random()*1
+					spawninforec.timetonext = .5 + math.random()*1
 				end
 				
 				-- Adjust the spawn time based on the current index
 				local timeMult = MOB_LIST[self.currentIndex].timeMult or 1
-				spawninforec.timetonexthound = spawninforec.timetonexthound*timeMult
+				spawninforec.timetonext = spawninforec.timetonext*timeMult
 
 			end
-			if spawninforec.houndstorelease <= 0 then
+			if spawninforec.spawnstorelease <= 0 then
 				table.insert(playersdone,i)
 			end
 		end
@@ -1017,7 +1053,7 @@ function self:OnUpdate(dt)
 		end
 		if #_spawninfo == 0 then
 			_spawninfo = nil
-			PlanNextHoundAttack()
+			PlanNextAttack()
 		end
 	else
 		if not _warning and _timetoattack < _warnduration then
@@ -1034,8 +1070,8 @@ function self:OnUpdate(dt)
             if _announcewarningsoundinterval <= 0 then
                 _announcewarningsoundinterval = 10 + math.random(5)
                 self:DoWarningSpeech()
-				warningCount = warningCount+1
-				updateWarningString(self.currentIndex)
+		warningCount = warningCount+1
+		updateWarningString(self.currentIndex)
             end
 
             _timetonextwarningsound =
@@ -1044,38 +1080,15 @@ function self:OnUpdate(dt)
                 (_timetoattack < 90 and 4 + math.random(2)) or
                                         5 + math.random(4)
             self:DoWarningSound()
-			
         end
     end
-	
-	
-	-- If beefalo are coming, start the stampede effects
-	-- TODO: This doesn't work yet. 
-	if false and MOB_LIST[self.currentIndex].prefab == "beefalo" then
-		if _timetoattack < _warnduration and _timetoattack > 0 and not self.quakeMachine.quakeStarted then
-			print("Starting quake effects")
-			-- This is kind of hackey...but i want the quake to INCREASE over time, not decrease. 
-			-- The camerashake only has functions that decrease...            
-			local interval = _timetoattack / 2
-
-			--self.quakeMachine:DoTaskInTime(0, function(self) self:WarnQuake(interval*2, .015, .1) end)
-			self.quakeMachine:WarnQuake(interval*2,.015,.1)
-			-- Camera shake decreases in intensity as it goes on...but I want it to INCREASE!!
-			self.quakeMachine:DoTaskInTime(1*interval, function(self) self:WarnQuake(interval*2, .02, .1) end)
-			self.quakeMachine:DoTaskInTime(2*interval, function(self) self:WarnQuake(interval*2, .025, .1) end)
-			self.quakeMachine.quakeStarted = true
-			
-			local interval = _timetoattack/5
-			for i=1, 5 do
-				self.quakeMachine:DoTaskInTime(i*interval, function(self) self:MakeStampedeLouder() end)
-			end
-			
-			-- Schedule quake to end
-			self.quakeMachine:DoTaskInTime(_timetoattack+5, function(self) self:EndQuake() end)
-		end
-	end
 end
 
+function self:LongUpdate(dt)
+	self:OnUpdate(dt)
+end
+
+--self.LongUpdate = self.OnUdpate
 --------------------------------------------------------------------------
 --[[ Save/Load ]]
 --------------------------------------------------------------------------
@@ -1093,7 +1106,7 @@ function self:OnSave()
 		warnduration = _warnduration,
 		attackplanned = _attackplanned,
 		currentIndex = self.currentIndex,
-        mobs = _mobs,
+                mobs = _mobs,
 		mob_list = MOB_LIST -- Save the current state of this
 	}
 end
@@ -1123,7 +1136,7 @@ function self:OnLoad(data)
 		end
 	elseif self.currentIndex == nil then
 		print("Current Index is not set. Planning new hound attack")
-		PlanNextHoundAttack()
+		PlanNextAttack()
 	else
 		updateWarningString(self.currentIndex)
 	end
@@ -1162,7 +1175,7 @@ function self:GetDebugString()
 	else	
 		local s = "ATTACKING\n"
 		for i, spawninforec in ipairs(_spawninfo) do
-			s = s..tostring(spawninforec.player).." - hounds left:"..tostring(spawninforec.houndstorelease).." next hound:"..tostring(spawninforec.timetonexthound)
+			s = s..tostring(spawninforec.player).." - spawns left:"..tostring(spawninforec.spawnstorelease).." next spawn:"..tostring(spawninforec.timetonext)
 			if i ~= #_activeplayers then
 				s = s.."\n"
 			end
@@ -1181,6 +1194,5 @@ function self:GetDebugSupplies()
 		end
 	end
 end
-
 
 end)

@@ -25,7 +25,7 @@ local MOB_LIST =
     [5]  = {enabled=true,prefab="spider",brain="spiderbrain",mobMult=1.7,timeMult=.5},
     [6]  = {enabled=true,prefab="killerbee",brain="killerbeebrain",mobMult=2.2,timeMult=.1},
     [7]  = {enabled=true,prefab="mosquito",brain="mosquitobrain",mobMult=2.5,timeMult=.15}, 
-    [8]  = {enabled=true,prefab="lightninggoat",brain="lightninggoatbrain",mobMult=.75,timeMult=1.25}, 
+    [8]  = {enabled=true,prefab="lightninggoat",brain="lightninggoatbrain",mobMult=.75,timeMult=1.25, healthMult=.5}, 
     [9]  = {enabled=true,prefab="beefalo",brain="beefalobrain",mobMult=.75,timeMult=1.5,healthMult=.5},
     [10] = {enabled=false,prefab="bat",brain="batbrain",CaveState="open",mobMult=1,timeMult=1}, -- No caves in DST...no bats
     [11] = {enabled=false,prefab="rook",brain="rookbrain",mobMult=1,timeMult=1,healthMult=.33}, -- These dudes don't work too well (mostly works, but they get lost)
