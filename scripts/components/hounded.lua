@@ -203,19 +203,19 @@ local function updateWarningString(index)
 		if prefab == nil then
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = defaultPhrase
 		elseif prefab == "merm" then
-			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Oh god, it smells like rotting fish"
+			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Oh god, it smells like rotting fish."
 		elseif prefab == "spider" then
-			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Sounds like a million tiny legs"
+			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Sounds like a million tiny legs."
 		elseif prefab == "tallbird" then
-			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Sounds like a murder...of tall birds"
+			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Sounds like a murder...of tall birds."
 		elseif prefab == "pigman" then
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Was that an oink?"
 		elseif prefab == "killerbee" then
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Beeeeeeeeeeeeeeeeees!"
 		elseif prefab == "mosquito" then
-			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "I hear a million teeny tiny vampires"
+			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "I hear a million teeny tiny vampires."
 		elseif prefab == "lightninggoat" then
-			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Those giant dark clouds look ominous"
+			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Those giant dark clouds look ominous."
 		elseif prefab == "beefalo" then
 			if warningCount == 1 then
 				STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Do you feel that?"
@@ -232,10 +232,14 @@ local function updateWarningString(index)
 		elseif prefab == "penguin" then
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Oh no...they think I took their eggs!"
 		elseif prefab == "walrus" then
-			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "The hunter becomes the hunted"
+			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "The hunter becomes the hunted."
 		else
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = defaultPhrase
 		end
+		
+	 if character == "WX78" then
+        STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = string.upper(STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS)
+    end
 	end
 end
 --------------------------------------------------------------------------
@@ -945,10 +949,39 @@ function self:ForceReleaseSpawn(target)
 	end
 end
 
+local function OriginalSummonSpawn(pt)
+	assert(pt)
+
+	local spawn_pt = GetSpawnPoint(pt)
+
+	if spawn_pt then
+
+		local prefab = _spawndata.base_prefab
+		local special_spawn_chance = GetSpecialSpawnChance()
+
+		if math.random() < special_spawn_chance then
+		    if TheWorld.state.iswinter or TheWorld.state.isspring then
+		        prefab = _spawndata.winter_prefab
+		    else
+			    prefab = _spawndata.summer_prefab
+			end
+		end
+
+		local spawn = SpawnPrefab(prefab)
+		if spawn then
+			spawn.Physics:Teleport(spawn_pt:Get())
+			spawn:FacePoint(pt)
+
+			return spawn
+		end
+	end
+end
+
 -- Creates a hound near 'pt'
 function self:SummonSpawn(pt)
+	print("self:SummonSpawn called")
 	if pt then
-		return SummonSpawn(pt)
+		return OriginalSummonSpawn(pt)
 	end
 end
 
