@@ -4,7 +4,7 @@ description = "Are the occasional Hound attack getting boring? Try this out. Eac
               " be an attack from a random mob selected from the configuration file.\n" ..
 			  "Surprises await those brave enough to try it out."
 author = "KingofTown"
-version = "1.5"
+version = "1.6"
 forumthread = "None"
 icon_atlas = "modicon.xml"
 icon = "modicon.tex"

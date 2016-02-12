@@ -194,6 +194,12 @@ local function updateWarningString(index)
 			character = "GENERIC"
 		end
 		
+		-- If this is a mod character (or wes)...or just doesn't have
+		-- this string defined...don't say anything.
+		if STRINGS.CHARACTERS[character] == nil then
+		   return
+		end
+		
 		if not index then
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "I'm...not sure what that sound is..."
 			return
