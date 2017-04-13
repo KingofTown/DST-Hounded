@@ -34,6 +34,7 @@ local MOB_LIST =
 	[14] = {enabled=true,prefab="perd",brain="perdbrain",mobMult=2.5,timeMult=.25},
 	[15] = {enabled=true,prefab="penguin",brain="penguinbrain",Season={SEASONS.WINTER},mobMult=2.5,timeMult=.35,damageMult=.5},
 	[16] = {enabled=true,prefab="walrus",brain="walrusbrain",Season={SEASONS.WINTER},mobMult=.33, timeMult=3,healthMult=.5},
+    [17] = {enabled=true,prefab="warg",brain="wargbrain",mobMult=.1, timeMult=3,healthMult=.1, damageMult=.5}, -- 180 health, 25 damage per attack, can summon children
 }
 
 -- Override the hounded component with our own
@@ -63,7 +64,7 @@ AddSimPostInit(disableMobs)
 
 
 --[[ Make this the top of the priority node. If a mob has the 'houndedKiller'
-     tag, then they should ack like mindless killers
+     tag, then they should act like mindless killers
 --]]
 local function MakeMobChasePlayer(brain)
 
@@ -82,7 +83,15 @@ local function MakeMobChasePlayer(brain)
         if node.name == "Parallel" and node.children[1].name == "OnFire" then
             fireindex = i
         end
+
     end
+
+    -- Let warg summon children
+    -- Blindly put it one further after the summon node...
+    if(brain.inst.prefab == "warg") then
+        fireindex = fireindex + 1
+    end
+
        
     -- Tell the brain "Attack the player...unless there is a wall in the way, get that instead"
 	table.insert(brain.bt.root.children, fireindex+1, chaseAndKill)

@@ -421,7 +421,7 @@ local function GetAveragePlayerAgeInDays()
 		sum = sum + v.components.age:GetAgeInDays()
 	end
 	local average = sum / #_activeplayers
-	return average
+	return average > 0 and average or 0
 end
 
 local function CalcEscalationLevel()
@@ -602,15 +602,20 @@ local function GetWaveAmounts()
 	end
 end
 
+local function NoHoles(pt)
+    return not TheWorld.Map:IsPointNearHole(pt)
+end
+
 local function GetSpawnPoint(pt)
-
-    local theta = math.random() * 2 * PI
-    local radius = SPAWN_DIST
-
-	local offset = FindWalkableOffset(pt, theta, radius, 12, true)
-	if offset then
-		return pt+offset
-	end
+    if not TheWorld.Map:IsAboveGroundAtPoint(pt:Get()) then
+        pt = FindNearbyLand(pt, 1) or pt
+    end
+    local offset = FindWalkableOffset(pt, math.random() * 2 * PI, SPAWN_DIST, 12, true, true, NoHoles)
+    if offset ~= nil then
+        offset.x = offset.x + pt.x
+        offset.z = offset.z + pt.z
+        return offset
+    end
 end
 
 local function GetSpecialSpawnChance()
@@ -829,25 +834,28 @@ local function SummonSpawn(pt)
 end
 
 local function ReleaseSpawn(target)
-	local pt = Vector3(target.Transform:GetWorldPosition())
-
-	local spawn = SummonSpawn(pt)
-	if spawn then
-		spawn.components.combat:SuggestTarget(target)
-		return true
-	end
-
-	return false
+    local spawn = SummonSpawn(target:GetPosition())
+    if spawn ~= nil then
+        spawn.components.combat:SuggestTarget(target)
+        return true
+    end
+    return false
 end
 
 local function RemovePendingSpawns(player)
     if _spawninfo ~= nil then
-    	for i,spawninforec in ipairs(_spawninfo) do
-    		if spawninforec.player == player then
-    			table.remove(_spawninfo, i)
-    			return
-    		end
-    	end
+        for i, spawninforec in ipairs(_spawninfo) do
+            for j, v in ipairs(spawninforec.players) do
+                if v == player then
+                    if #spawninforec.players > 1 then
+                        table.remove(spawninforec.players, j)
+                    else
+                        table.remove(_spawninfo, i)
+                    end
+                    return
+                end
+            end
+        end
     end
 end
 
@@ -874,6 +882,18 @@ local function OnPlayerLeft(src, player)
     end
 end
 
+local function OnPauseHounded(src, data)
+    if data ~= nil and data.source ~= nil then
+        _pausesources:SetModifier(data.source, true, data.reason)
+    end
+end
+
+local function OnUnpauseHounded(src, data)
+    if data ~= nil and data.source ~= nil then
+        _pausesources:RemoveModifier(data.source, data.reason)
+    end
+end
+
 --------------------------------------------------------------------------
 --[[ Initialization ]]
 --------------------------------------------------------------------------
@@ -884,8 +904,11 @@ for i, v in ipairs(AllPlayers) do
 end
 
 --Register events
-inst:ListenForEvent("ms_playerjoined", OnPlayerJoined, TheWorld)
-inst:ListenForEvent("ms_playerleft", OnPlayerLeft, TheWorld)
+inst:ListenForEvent("ms_playerjoined", OnPlayerJoined)
+inst:ListenForEvent("ms_playerleft", OnPlayerLeft)
+
+inst:ListenForEvent("pausehounded", OnPauseHounded)
+inst:ListenForEvent("unpausehounded", OnUnpauseHounded)
 
 self.inst:StartUpdatingComponent(self)
 PlanNextAttack()
