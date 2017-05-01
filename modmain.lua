@@ -14,12 +14,14 @@ local ipairs = GLOBAL.ipairs
         timeMult: how fast these come out compared to normal hounds. 0.5 is twice as fast. 2 is half speed.
 		damageMult: how much damage it does compared to normal mob
 		healthMult: how much health it starts with relative to a normal version of it
+        surface: land, cave, both (Defaults to land only)
+        minAgeDays: minimum average age of all players before considering spawning this
         
 --]]
 local MOB_LIST =
 {
     [1]  = {enabled=true,prefab="hound"}, -- No changes here...same old hounds
-    [2]  = {enabled=true,prefab="merm",brain="mermbrain",mobMult=1,timeMult=1,healthMult=.5},
+    [2]  = {enabled=true,prefab="merm",brain="mermbrain",mobMult=1,timeMult=1.5,healthMult=.5, damageMult=.8},
     [3]  = {enabled=true,prefab="tallbird",brain="tallbirdbrain",mobMult=.75,timeMult=1.2,healthMult=.5},
     [4]  = {enabled=true,prefab="pigman",brain="pigbrain",mobMult=1,timeMult=1},
     [5]  = {enabled=true,prefab="spider",brain="spiderbrain",mobMult=1.7,timeMult=.5},
@@ -34,7 +36,9 @@ local MOB_LIST =
 	[14] = {enabled=true,prefab="perd",brain="perdbrain",mobMult=2.5,timeMult=.25},
 	[15] = {enabled=true,prefab="penguin",brain="penguinbrain",Season={SEASONS.WINTER},mobMult=2.5,timeMult=.35,damageMult=.5},
 	[16] = {enabled=true,prefab="walrus",brain="walrusbrain",Season={SEASONS.WINTER},mobMult=.33, timeMult=3,healthMult=.5},
-    [17] = {enabled=true,prefab="warg",brain="wargbrain",mobMult=.1, timeMult=3,healthMult=.1, damageMult=.5}, -- 180 health, 25 damage per attack, can summon children
+    [17] = {enabled=true,prefab="warg",brain="wargbrain",minAgeDays=40,mobMult=.1, timeMult=3,healthMult=.2, damageMult=.5}, -- 180 health, 25 damage per attack, can summon children
+    [18] = {enabled=true,prefab="spider_hider",surface="cave",mobMult=1.7,timeMult=.5},
+    [19] = {enabled=true,prefab="worm",surface="cave"} -- Normal cave mobs
 }
 
 -- Override the hounded component with our own

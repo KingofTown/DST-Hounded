@@ -115,6 +115,15 @@ local _spawninfo = nil
 --[[ Mod Private Functions ]]
 --------------------------------------------------------------------------
 
+local function GetAveragePlayerAgeInDays()
+  local sum = 0
+  for i,v in ipairs(_activeplayers) do
+    sum = sum + v.components.age:GetAgeInDays()
+  end
+  local average = sum / #_activeplayers
+  return average > 0 and average or 0
+end
+
 local function getDumbString(num)
     if num == 1 then return "ONE!"
     elseif num == 2 then return "TWO!"
@@ -148,31 +157,67 @@ local function getRandomMob()
         t[i],t[j]=t[j],t[i]
     end
     
+    print(#MOB_LIST .. " different options")
+    
     -- Return the first one that is enabled
     for k,v in pairs(t) do
         local pickThisMob = true
+        local reason = ""
         if MOB_LIST[v].enabled then
+
+        	-- Check for age restrictions
+        	-- This needs to be checked before spawning too
+        	local minAge = MOB_LIST[v].minAgeDays
+        	if minAge ~= nil then
+        		local age = GetAveragePlayerAgeInDays()
+        		if age < minAge then
+        			pickThisMob = false
+        			reason = "minimum player age not met"
+        		end
+        	end
+
+
+        	-- Check for surface restriction
+        	local surface = MOB_LIST[v].surface
+        	if TheWorld:HasTag("cave") then
+        		if surface == nil or 
+        			(surface ~= "cave" and surface ~= "both") then
+        				pickThisMob = false;
+        				reason = "not spawning land mob in cave"
+        		end
+        	else
+        	  -- On the surface. Don't spawn cave-only mobs
+        		if surface ~= nil and (surface ~= "land" or surface ~= "both") then
+        				pickThisMob = false
+        				reason = "not spawning cave mob on land"
+        		end
+    			end
+        	
 
             -- Check for season restrictions
             if MOB_LIST[v].Season ~= nil then
                 for key,season in pairs(MOB_LIST[v].Season) do
                     if TheWorld.state.season ~= season then
                         pickThisMob = false
+                        reason = "season not met"
                     else
                         pickThisMob = true
                         break
                     end
                 end
                 
-                if not pickThisMob then
-                    print("Skipping " .. tostring(MOB_LIST[v].prefab) .. " as mob because season not met")
-                end
+
             end
 			
+			      if not pickThisMob then
+              print("Skipping " .. tostring(MOB_LIST[v].prefab) .. " as mob because " .. reason)
+            end
             -- If this is still true, return this selection 
             if pickThisMob then 
                 return v 
             end
+        else
+          print("MOB: " .. MOB_LIST[v].prefab .. " it not enabled")
         end
     end
 
@@ -236,7 +281,7 @@ local function updateWarningString(index)
 		elseif prefab == "perd" then
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Gobbles!!!"
 		elseif prefab == "penguin" then
-			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Oh no...they think I took their eggs!"
+			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Waddle waddle waddle..."
 		elseif prefab == "walrus" then
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "The hunter becomes the hunted."
 		else
@@ -414,15 +459,6 @@ end
 --------------------------------------------------------------------------
 --[[ Private member functions ]]
 --------------------------------------------------------------------------
-
-local function GetAveragePlayerAgeInDays()
-	local sum = 0
-	for i,v in ipairs(_activeplayers) do
-		sum = sum + v.components.age:GetAgeInDays()
-	end
-	local average = sum / #_activeplayers
-	return average > 0 and average or 0
-end
 
 local function CalcEscalationLevel()
 	local day = GetAveragePlayerAgeInDays()
@@ -733,6 +769,11 @@ local function SummonSpawn(pt)
 			prefab = "spider_warrior"
 		end
 
+		-- If cave spiders....give a channce for spitter spiders
+		if prefab == "spider_hider" and math.random() < special_hound_chance then
+			prefab = "spider_spitter"
+		end
+
 		local chanceMod = MOB_LIST[self.currentIndex].mobMult or 1
 		if math.random() < special_hound_chance/chanceMod then
 		--if prefab == "hound" and math.random() < special_hound_chance then
@@ -931,6 +972,12 @@ end
 
 function self:SetSpawnData(data)
 	_spawndata = data
+	print("MOD STUFF")
+	-- For the mod, replace hounds with the default for this instance
+	-- (hound on surface, worms underground)
+	-- MOB_LIST[1].prefab = data.base_prefab
+	-- Nevermind,this is too early (MOB_LIST isn't set yet). The
+	-- list is updated when loaded
 end
 
 --------------------------------------------------------------------------
@@ -1221,6 +1268,10 @@ end
 
 function self:SetMobList(list)
 	MOB_LIST = list
+	-- Set the first element to the default for this world 
+	-- (hounds on surface, worms underground)
+	--print("Setting default prefab to " .. _spawndata.base_prefab)
+	--MOB_LIST[1].prefab = _spawndata.base_prefab
 end
 
 --------------------------------------------------------------------------
