@@ -205,19 +205,16 @@ local function getRandomMob()
                         break
                     end
                 end
-                
-
             end
 			
 			      if not pickThisMob then
-              print("Skipping " .. tostring(MOB_LIST[v].prefab) .. " as mob because " .. reason)
-            end
-            -- If this is still true, return this selection 
-            if pickThisMob then 
-                return v 
+              print("Skipping " .. tostring(MOB_LIST[v].prefab) .. ". Reason: " .. reason)
+            else
+              -- If this is still true, return this selection 
+              return v 
             end
         else
-          print("MOB: " .. MOB_LIST[v].prefab .. " it not enabled")
+          print("MOB: " .. MOB_LIST[v].prefab .. " is not enabled")
         end
     end
 
@@ -284,6 +281,8 @@ local function updateWarningString(index)
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "Waddle waddle waddle..."
 		elseif prefab == "walrus" then
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "The hunter becomes the hunted."
+	  elseif prefab == "warg" then
+	    STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "That one sounds bigger than the others..."
 		else
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = defaultPhrase
 		end
@@ -391,7 +390,15 @@ self.AddMob = function(self,mob)
 		-- Tweak the health of this mob based on the table
 		if index and MOB_LIST[index].healthMult then
 			local healthMult = MOB_LIST[index].healthMult
-			mob.components.health:SetMaxHealth(healthMult*mob.components.health.maxhealth)
+			local scaleHealth = 0
+			if MOB_LIST[index].healthScale then
+			  -- Scale the health based on average player age
+			  -- TODO: Make this based on group age...
+			  -- TODO: Make the max be the normal mob health...
+			  scaleHealth = math.min(500,GetAveragePlayerAgeInDays())
+			  print("Adding " .. scaleHealth .. " health based on age")
+			end
+			mob.components.health:SetMaxHealth(healthMult*mob.components.health.maxhealth + scaleHealth)
 		end
 
 		
