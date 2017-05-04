@@ -140,7 +140,8 @@ local MOB_LIST =
     [18] = {prefab="spider_hider", -- Cave Spiders
               enabled=true,
               surface="cave",
-              mobMult=1.7,
+              healthMult=.84, -- 125 health
+              mobMult=3.2,   -- This is compared against worm spawn rates.
               timeMult=.5
             },
     [19] = {prefab="worm", -- Cave Worms

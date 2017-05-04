@@ -9,9 +9,13 @@ Guess I'm forced to make a copy of the hounded class and just mod it here.
 
 return Class(function(self, inst)
 
-
-
 assert(TheWorld.ismastersim, "SuperHounded should not exist on client")
+
+--------------------------------------------------------------------------
+--[[ Dependencies ]]
+--------------------------------------------------------------------------
+
+local SourceModifierList = require("util/sourcemodifierlist")
 
 --------------------------------------------------------------------------
 --[[ Constants ]]
@@ -50,14 +54,14 @@ local _warnduration = 30
 local _attackplanned = false
 local _timetonextwarningsound = 0
 local _announcewarningsoundinterval = 4
+local _pausesources = SourceModifierList(inst, false, SourceModifierList.boolean)
 
 --Mod Private variables
 local MOB_LIST = {}
 local warningCount = 1
 local houndDebug = false
 
-local defaultPhrase = STRINGS.CHARACTERS.GENERIC.ANNOUNCE_HOUNDS
-STRINGS.CHARACTERS.GENERIC.ANNOUNCE_HOUNDS = "WTF WAS THAT!!"
+
 
 --Mod Public variables
 self.quakeMachine = CreateEntity()
@@ -103,6 +107,15 @@ local _spawndata =
 			{time = 500, sound = "houndwarning_lvl1"},
 		},
 	}
+	
+local defaultPhrase
+if TheWorld:HasTag("cave") then
+  defaultPhrase = STRINGS.CHARACTERS.GENERIC.ANNOUNCE_WORMS
+else
+  defaultPhrase = STRINGS.CHARACTERS.GENERIC.ANNOUNCE_HOUNDS
+end
+	
+STRINGS.CHARACTERS.GENERIC.ANNOUNCE_HOUNDS = "WTF WAS THAT!!"
 
 local _attackdelayfn = _spawndata.attack_delays.occasional
 local _attacksizefn = _spawndata.attack_levels.light.numspawns
@@ -179,11 +192,13 @@ local function getRandomMob()
 
         	-- Check for surface restriction
         	local surface = MOB_LIST[v].surface
-        	if TheWorld:HasTag("cave") then
+        	if TheWorld:HasTag("cave") and pickThisMob then
         		if surface == nil or 
         			(surface ~= "cave" and surface ~= "both") then
         				pickThisMob = false;
         				reason = "not spawning land mob in cave"
+        		else
+        		  print(MOB_LIST[v].prefab .. " still valid...")
         		end
         	else
         	  -- On the surface. Don't spawn cave-only mobs
@@ -195,7 +210,7 @@ local function getRandomMob()
         	
 
             -- Check for season restrictions
-            if MOB_LIST[v].Season ~= nil then
+           if MOB_LIST[v].Season ~= nil and pickThisMob then
                 for key,season in pairs(MOB_LIST[v].Season) do
                     if TheWorld.state.season ~= season then
                         pickThisMob = false
@@ -246,7 +261,7 @@ local function updateWarningString(index)
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "I'm...not sure what that sound is..."
 			return
 		end
-	
+			
 		local prefab = MOB_LIST[index].prefab
 		if prefab == nil then
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = defaultPhrase
@@ -283,6 +298,8 @@ local function updateWarningString(index)
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "The hunter becomes the hunted."
 	  elseif prefab == "warg" then
 	    STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = "That one sounds bigger than the others..."
+	  elseif prefab == "spider_hider" then
+      STRINGS.CHARACTERS[character].ANNOUNCE_WORMS = "Spiders?!?!"
 		else
 			STRINGS.CHARACTERS[character].ANNOUNCE_HOUNDS = defaultPhrase
 		end
@@ -1083,6 +1100,9 @@ function self:PlanNextHoundAttack(index)
 end
 
 function self:StartAttack(tt)
+  if not tt then
+     tt = 1
+  end
 	print("Starting attack in " .. tt .. " seconds")
 	houndDebug = true
 	_timetoattack=tt
@@ -1118,6 +1138,13 @@ function self:OnUpdate(dt)
 	end
 
 	_timetoattack = _timetoattack - dt
+	
+	if _pausesources:Get() and not _warning and (_timetoattack >= 0 or _spawninfo == nil) then
+      if _timetoattack < 0 then
+          PlanNextAttack()
+      end
+      return
+  end
 
 	if _timetoattack < 0 then
 	
@@ -1288,7 +1315,7 @@ end
 function self:GetDebugString()
 	if _timetoattack > 0 then
 		if self.currentIndex then
-			return string.format("%s %s are coming in %2.2f", _warning and "WARNING" or "WAITING", MOB_LIST[self.currentIndex].prefab,  _timetoattack)
+			return string.format("%s %s are coming in %2.2f", (_warning and "WARNING") or (_pausesources:Get() and "BLOCKED") or "WAITING", MOB_LIST[self.currentIndex].prefab,  _timetoattack)
 		else
 			return string.format("No mob selected yet...")
 		end
