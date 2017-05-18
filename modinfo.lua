@@ -4,7 +4,7 @@ description = "Are the occasional Hound attack getting boring? Try this out. Eac
               " be an attack from a random mob selected from the configuration file.\n" ..
 			  "Surprises await those brave enough to try it out."
 author = "KingofTown"
-version = "1.9"
+version = "1.95"
 forumthread = "None"
 icon_atlas = "modicon.xml"
 icon = "modicon.tex"
@@ -144,7 +144,7 @@ configuration_options =
     default = "default",
   },
 	{
-		name = "varg",
+		name = "warg",
 		label = "Varg!",
 		options =	{
 						{description = "On", data = "default"},
@@ -152,5 +152,14 @@ configuration_options =
 					},
 		default = "default",
 	},
+	{
+    name = "worm",
+    label = "Cave Worms",
+    options = {
+            {description = "On", data = "default"},
+            {description = "Off", data = "off"},
+          },
+    default = "default",
+  },
 	
 }

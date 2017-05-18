@@ -177,7 +177,6 @@ local function getRandomMob()
         local pickThisMob = true
         local reason = ""
         if MOB_LIST[v].enabled then
-
         	-- Check for age restrictions
         	-- This needs to be checked before spawning too
         	local minAge = MOB_LIST[v].minAgeDays
@@ -211,15 +210,21 @@ local function getRandomMob()
 
             -- Check for season restrictions
            if MOB_LIST[v].Season ~= nil and pickThisMob then
-                for key,season in pairs(MOB_LIST[v].Season) do
-                    if TheWorld.state.season ~= season then
-                        pickThisMob = false
-                        reason = "season not met"
-                    else
-                        pickThisMob = true
-                        break
-                    end
-                end
+              local stillValid = false
+              for key,season in pairs(MOB_LIST[v].Season) do
+                  -- Loop over all seasons before making decision
+                  if TheWorld.state.season == season then
+                      stillValid = true
+                  end
+              end
+              
+              -- No season overlapped with the current season
+              if not stillValid then
+                pickThisMob = false
+                reason = "season not met"
+              else
+                pickThisMob = true
+              end
             end
 			
 			      if not pickThisMob then
@@ -1152,6 +1157,23 @@ function self:OnUpdate(dt)
 		-- Generate a new random one at this point
 		if self.currentIndex == nil then
 			self.currentIndex = getRandomMob()
+		end
+		
+		-- Verify the season requirements are still valid.
+		if MOB_LIST[self.currentIndex].Season ~= nil then
+		  local stillValid = false
+		  for key,season in pairs(MOB_LIST[self.currentIndex].Season) do
+        if TheWorld.state.season == season then
+          stillValid = true
+        end
+      end
+      
+      -- If stillValid is false, pick a new mob!
+      if not stillValid then
+        print("Current mob no longer valid! Picking new one...")
+        self.currentIndex = getRandomMob()
+      end
+        
 		end
 	
 		-- Okay, it's hound-day, get number of dogs for each player
