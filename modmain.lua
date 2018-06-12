@@ -148,6 +148,10 @@ local MOB_LIST =
               enabled=true,
               surface="cave"
            },
+    [20] = {prefab="slurtle", -- Cave Worms
+              enabled=true,
+              surface="cave"
+           },
 } -- end MOB_LIST
 
 -- Override the hounded component with our own
