@@ -1,10 +1,16 @@
 -- Mod Settings
-name = "Super Hound Waves"
+name = "Super Hound Waves (TEST)"
 description = "Are the occasional Hound attack getting boring? Try this out. Each hound attack will instead" ..
               " be an attack from a random mob selected from the configuration file.\n" ..
-			  "Surprises await those brave enough to try it out."
+			  "Surprises await those brave enough to try it out.\n\n" ..
+			  "Configuration Notes:\n" ..
+			  "Normal - mob has a chance to spawn with some enhancements (fire/ice/were/charged/etc).\n" ..
+			  "No Enhanced - mob has a chance to spawn, normal versions only.\n" ..
+			  "Always Enhanced - mob has a chance to spawn, will always be the enhanced version only.\n" ..
+			  "Off - mob will not be picked to spawn\n"
+
 author = "KingofTown"
-version = "1.95"
+version = "2.0"
 forumthread = "None"
 icon_atlas = "modicon.xml"
 icon = "modicon.tex"
@@ -21,7 +27,9 @@ configuration_options =
 		name = "hound",
 		label = "Hounds",
 		options =	{
-						{description = "On", data = "default"},
+						{description = "Normal", data = "default"},
+						{description = "No Enhanced", data = "on_no_ele"},
+						{description = "Always Enhanced", data = "on_always_ele"},
 						{description = "Off", data = "off"},
 					},
 		default = "default",
@@ -30,7 +38,9 @@ configuration_options =
 		name = "merm",
 		label = "Mermen",
 		options =	{
-						{description = "On", data = "default"},
+						{description = "Normal", data = "default"},
+						{description = "No Enhanced", data = "on_no_ele"},
+						{description = "Always Enhanced", data = "on_always_ele"},
 						{description = "Off", data = "off"},
 					},
 		default = "default",
@@ -39,7 +49,9 @@ configuration_options =
 		name = "tallbird",
 		label = "Tallbirds",
 		options =	{
-						{description = "On", data = "default"},
+						{description = "Normal", data = "default"},
+						{description = "No Enhanced", data = "on_no_ele"},
+						{description = "Always Enhanced", data = "on_always_ele"},
 						{description = "Off", data = "off"},
 					},
 		default = "default",
@@ -48,7 +60,9 @@ configuration_options =
 		name = "pigman",
 		label = "Pigmen",
 		options =	{
-						{description = "On", data = "default"},
+						{description = "Normal", data = "default"},
+						{description = "No Enhanced", data = "on_no_ele"},
+						{description = "Always Enhanced", data = "on_always_ele"},
 						{description = "Off", data = "off"},
 					},
 		default = "default",
@@ -57,7 +71,9 @@ configuration_options =
 		name = "spider",
 		label = "Spiders",
 		options =	{
-						{description = "On", data = "default"},
+						{description = "Normal", data = "default"},
+						{description = "No Enhanced", data = "on_no_ele"},
+						{description = "Always Enhanced", data = "on_always_ele"},
 						{description = "Off", data = "off"},
 					},
 		default = "default",
@@ -66,7 +82,9 @@ configuration_options =
 		name = "killerbee",
 		label = "Killer Bees",
 		options =	{
-						{description = "On", data = "default"},
+						{description = "Normal", data = "default"},
+						{description = "No Enhanced", data = "on_no_ele"},
+						{description = "Always Enhanced", data = "on_always_ele"},
 						{description = "Off", data = "off"},
 					},
 		default = "default",
@@ -75,7 +93,9 @@ configuration_options =
 		name = "mosquito",
 		label = "Mosquitos",
 		options =	{
-						{description = "On", data = "default"},
+						{description = "Normal", data = "default"},
+						{description = "No Enhanced", data = "on_no_ele"},
+						{description = "Always Enhanced", data = "on_always_ele"},
 						{description = "Off", data = "off"},
 					},
 		default = "default",
@@ -84,7 +104,9 @@ configuration_options =
 		name = "lightninggoat",
 		label = "Lightning Goats",
 		options =	{
-						{description = "On", data = "default"},
+						{description = "Normal", data = "default"},
+						{description = "No Enhanced", data = "on_no_ele"},
+						{description = "Always Enhanced", data = "on_always_ele"},
 						{description = "Off", data = "off"},
 					},
 		default = "default",
@@ -93,7 +115,9 @@ configuration_options =
 		name = "beefalo",
 		label = "Beefalo",
 		options =	{
-						{description = "On", data = "default"},
+						{description = "Normal", data = "default"},
+						{description = "No Enhanced", data = "on_no_ele"},
+						{description = "Always Enhanced", data = "on_always_ele"},
 						{description = "Off", data = "off"},
 					},
 		default = "default",
@@ -102,7 +126,9 @@ configuration_options =
 		name = "knight",
 		label = "Clockwork Knights",
 		options =	{
-						{description = "On", data = "default"},
+						{description = "Normal", data = "default"},
+						{description = "No Enhanced", data = "on_no_ele"},
+						{description = "Always Enhanced", data = "on_always_ele"},
 						{description = "Off", data = "off"},
 					},
 		default = "default",
@@ -111,7 +137,9 @@ configuration_options =
 		name = "perd",
 		label = "Turkeys",
 		options =	{
-						{description = "On", data = "default"},
+						{description = "Normal", data = "default"},
+						{description = "No Enhanced", data = "on_no_ele"},
+						{description = "Always Enhanced", data = "on_always_ele"},
 						{description = "Off", data = "off"},
 					},
 		default = "default",
@@ -120,7 +148,9 @@ configuration_options =
 		name = "penguin",
 		label = "Penguins!",
 		options =	{
-						{description = "On", data = "default"},
+						{description = "Normal", data = "default"},
+						{description = "No Enhanced", data = "on_no_ele"},
+						{description = "Always Enhanced", data = "on_always_ele"},
 						{description = "Off", data = "off"},
 					},
 		default = "default",
@@ -129,37 +159,56 @@ configuration_options =
 		name = "walrus",
 		label = "Walrus Hunting Party!",
 		options =	{
-						{description = "On", data = "default"},
+						{description = "Normal", data = "default"},
+						{description = "No Enhanced", data = "on_no_ele"},
+						{description = "Always Enhanced", data = "on_always_ele"},
 						{description = "Off", data = "off"},
 					},
 		default = "default",
 	},
 	{
-    name = "spider_hider",
-    label = "Cave Spiders (Caves Only)",
-    options = {
-            {description = "On", data = "default"},
-            {description = "Off", data = "off"},
-          },
-    default = "default",
-  },
+	    name = "spider_hider",
+	    label = "Cave Spiders (Caves Only)",
+	    options = {
+							{description = "Normal", data = "default"},
+							{description = "No Enhanced", data = "on_no_ele"},
+							{description = "Always Enhanced", data = "on_always_ele"},
+							{description = "Off", data = "off"},
+	          },
+	    default = "default",
+  	},
 	{
 		name = "warg",
 		label = "Varg!",
 		options =	{
-						{description = "On", data = "default"},
+						{description = "Normal", data = "default"},
+						{description = "No Enhanced", data = "on_no_ele"},
+						{description = "Always Enhanced", data = "on_always_ele"},
 						{description = "Off", data = "off"},
 					},
 		default = "default",
 	},
 	{
-    name = "worm",
-    label = "Cave Worms",
-    options = {
-            {description = "On", data = "default"},
-            {description = "Off", data = "off"},
-          },
-    default = "default",
-  },
-	
+	    name = "worm",
+	    label = "Cave Worms",
+	    options = {
+							{description = "Normal", data = "default"},
+							{description = "No Enhanced", data = "on_no_ele"},
+							{description = "Always Enhanced", data = "on_always_ele"},
+							{description = "Off", data = "off"},
+	          },
+	    default = "default",
+	},
+	{
+		name = "drop_mult",
+		label = "Drop Rate Modifier",
+		options = {
+			{ description = "Normal" , data = 1.0},
+			{ description = "Half",    data = 0.5},
+			{ description = "None",    data = 0.0},
+			{ description = "Double",  data = 2.0},
+		},
+		default = 1.0,
+	},
+
 }

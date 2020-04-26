@@ -5,6 +5,7 @@ local ipairs = GLOBAL.ipairs
 
 --[[ Table is as follows:
         enabled: is this a valid prefab to use (DLC restrictions or config file)
+        elemental: normal, always, never, off
         prefab: prefab name
         brain: brain name. If a mob has this defined, will add a new PriorityNode to the brain to attack player.
                (leave this out if don't want to override brain function at all)
@@ -17,15 +18,17 @@ local ipairs = GLOBAL.ipairs
 		    healthScale: true/false - mob health increases to the group size/age
         surface: land, cave, both (Defaults to land only)
         minAgeDays: minimum average age of all players before considering spawning this
-        
+
 --]]
 local MOB_LIST =
 {
     [1]  = {prefab="hound",
-              enabled=true
+              enabled=true,
+              elemental=normal,
            }, -- No changes here...same old hounds
     [2]  = {prefab="merm",
               enabled=true,
+              elemental=normal,
               brain="mermbrain",
               mobMult=1,
               timeMult=1.5,
@@ -34,6 +37,7 @@ local MOB_LIST =
            },
     [3]  = {prefab="tallbird",
               enabled=true,
+              elemental=normal,
               brain="tallbirdbrain",
               mobMult=.75,
               timeMult=1.2,
@@ -41,30 +45,35 @@ local MOB_LIST =
             },
     [4]  = {prefab="pigman",
               enabled=true,
+              elemental=normal,
               brain="pigbrain",
               mobMult=1,
               timeMult=1
             },
     [5]  = {prefab="spider",
               enabled=true,
+              elemental=normal,
               brain="spiderbrain",
               mobMult=1.7,
               timeMult=.5
             },
     [6]  = {prefab="killerbee",
               enabled=true,
+              elemental=normal,
               brain="killerbeebrain",
               mobMult=2.2,
               timeMult=.1
             },
     [7]  = {prefab="mosquito",
               enabled=true,
+              elemental=normal,
               brain="mosquitobrain",
               mobMult=2.5,
               timeMult=.15
             }, 
     [8]  = {prefab="lightninggoat",
               enabled=true,
+              elemental=normal,
               brain="lightninggoatbrain",
               mobMult=.75,
               timeMult=1.25, 
@@ -72,6 +81,7 @@ local MOB_LIST =
             }, 
     [9]  = {prefab="beefalo",
               enabled=true,
+              elemental=normal,
               brain="beefalobrain",
               mobMult=.75,
               timeMult=1.5,
@@ -79,6 +89,7 @@ local MOB_LIST =
             },
     [10] = {prefab="bat",
               enabled=false,
+              elemental=normal,
               brain="batbrain",
               CaveState="open",
               mobMult=1,
@@ -86,6 +97,7 @@ local MOB_LIST =
             }, -- No caves in DST...no bats
     [11] = {prefab="rook",
               enabled=false, -- These dudes just get lost. Probably need to check their braincode
+              elemental=normal,
               brain="rookbrain",
               mobMult=1,
               timeMult=1,
@@ -93,42 +105,48 @@ local MOB_LIST =
            },
     [12] = {prefab="knight",
               enabled=true,
+              elemental=normal,
               brain="knightbrain",
               mobMult=1,
               timeMult=1.5,
               healthMult=.33
-           }, 
+           },
     [13] = {prefab="mossling",
               enabled=false, -- Needs work. They wont get enraged. Also spawns moosegoose....so yeah
+              elemental=normal,
               brain="mosslingbrain",
               Season={SEASONS.SPRING},
               mobMult=1,timeMult=1,
               healthMult=.66
-           }, 
+           },
 	  [14] = {prefab="perd",
-	            enabled=true,
-          	  brain="perdbrain",
-          	  mobMult=2.5,
-          	  timeMult=.25
-        	  },
+              enabled=true,
+              elemental=normal,
+              brain="perdbrain",
+              mobMult=2.5,
+              timeMult=.25
+            },
 	  [15] = {prefab="penguin",
 	            enabled=true,
-          	  brain="penguinbrain",
-          	  Season={SEASONS.WINTER},
-          	  mobMult=2.5,
-          	  timeMult=.35,
-          	  damageMult=.5
-        	  },
+              elemental=normal,
+              brain="penguinbrain",
+              Season={SEASONS.WINTER},
+              mobMult=2.5,
+              timeMult=.35,
+              damageMult=.5
+            },
 	  [16] = {prefab="walrus",
 	            enabled=true,
-          	  brain="walrusbrain",
-          	  Season={SEASONS.WINTER},
-          	  mobMult=.33,
-          	  timeMult=3,
-          	  healthMult=.5
-          	},
+              elemental=normal,
+              brain="walrusbrain",
+              Season={SEASONS.WINTER},
+              mobMult=.33,
+              timeMult=3,
+              healthMult=.5
+            },
     [17] = {prefab="warg", -- Varg
               enabled=true,
+              elemental=normal,
               brain="wargbrain",
               minAgeDays=40,
               mobMult=.1,
@@ -139,6 +157,7 @@ local MOB_LIST =
             },
     [18] = {prefab="spider_hider", -- Cave Spiders
               enabled=true,
+              elemental=normal,
               surface="cave",
               healthMult=.84, -- 125 health
               mobMult=3.2,   -- This is compared against worm spawn rates.
@@ -146,10 +165,12 @@ local MOB_LIST =
             },
     [19] = {prefab="worm", -- Cave Worms
               enabled=true,
+              elemental=normal,
               surface="cave"
            },
     [20] = {prefab="slurtle", -- Cave Worms
               enabled=true,
+              elemental=normal,
               surface="cave"
            },
 } -- end MOB_LIST
@@ -167,10 +188,20 @@ local function disableMobs()
 			if enabled ~= nil and enabled == "off" then
 				print("Disabling " .. v.prefab .. " due to config setting")
 				MOB_LIST[k].enabled = false
+      elseif enabled ~= nil and enabled == "on_no_ele" then
+        print("Removing elemental chance for " .. v.prefab)
+        MOB_LIST[k].elemental = "never"
+      elseif enabled ~= nil and enabled == "on_always_ele" then
+        print("Setting " .. v.prefab .. " to always elemental")
+        MOB_LIST[k].elemental = "always"
 			end
 		end
 		-- Update the list with the new ones
-		GLOBAL.TheWorld.components.hounded:SetMobList(MOB_LIST)
+    GLOBAL.TheWorld.components.hounded:SetMobList(MOB_LIST)
+    drop_mult = GetModConfigData("drop_mult")
+    if drop_mult ~= nil then
+      GLOBAL.TheWorld.components.hounded:SetDropRate(drop_mult)
+    end
 	end
 end
 AddSimPostInit(disableMobs)
@@ -189,10 +220,10 @@ local function MakeMobChasePlayer(brain)
 		-- Chase for 60 seconds, target distance 60
         return GLOBAL.ChaseAndAttack(inst,60,60)
     end
-    
-	attackWall = GLOBAL.WhileNode(function() return brain.inst:HasTag("houndedKiller") end, "Get The Coward", GLOBAL.AttackWall(brain.inst) )
+
+	  attackWall   = GLOBAL.WhileNode(function() return brain.inst:HasTag("houndedKiller") end, "Get The Coward", GLOBAL.AttackWall(brain.inst) )
     chaseAndKill = GLOBAL.WhileNode(function() return brain.inst:HasTag("houndedKiller") end, "Kill Kill", KillKillDieDie(brain.inst))
-	
+
     -- Find the root node. Insert this WhileNode at the top.
     -- Well, we'll put it after "OnFire" (if it exists) so it will still panic if on fire
     local fireindex = 0
@@ -209,10 +240,10 @@ local function MakeMobChasePlayer(brain)
         fireindex = fireindex + 1
     end
 
-       
+
     -- Tell the brain "Attack the player...unless there is a wall in the way, get that instead"
 	table.insert(brain.bt.root.children, fireindex+1, chaseAndKill)
-	table.insert(brain.bt.root.children, fireindex+1, attackWall) 
+	table.insert(brain.bt.root.children, fireindex+1, attackWall)
 end
 
 -- Insert this brain for each mob that has it defined in MOB_LIST
