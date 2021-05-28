@@ -1,5 +1,5 @@
 -- Mod Settings
-name = "Super Hound Waves (TEST)"
+name = "Super Hound Waves"
 description = "Are the occasional Hound attack getting boring? Try this out. Each hound attack will instead" ..
               " be an attack from a random mob selected from the configuration file.\n" ..
 			  "Surprises await those brave enough to try it out.\n\n" ..
@@ -10,11 +10,11 @@ description = "Are the occasional Hound attack getting boring? Try this out. Eac
 			  "Off - mob will not be picked to spawn\n"
 
 author = "KingofTown"
-version = "2.0"
+version = "3.0"
 forumthread = "None"
 icon_atlas = "modicon.xml"
 icon = "modicon.tex"
-priority = 2
+priority = 5
 
 
 -- Compatibility
@@ -191,6 +191,17 @@ configuration_options =
 	{
 	    name = "worm",
 	    label = "Cave Worms",
+	    options = {
+							{description = "Normal", data = "default"},
+							{description = "No Enhanced", data = "on_no_ele"},
+							{description = "Always Enhanced", data = "on_always_ele"},
+							{description = "Off", data = "off"},
+	          },
+	    default = "default",
+	},
+	{
+	    name = "squid",
+	    label = "SkitterSquid",
 	    options = {
 							{description = "Normal", data = "default"},
 							{description = "No Enhanced", data = "on_no_ele"},
