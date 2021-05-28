@@ -316,32 +316,30 @@ local function AddToHoundedMod()
 end
 
 -- If this mod is enabled, add some things to it. 
---if GLOBAL.KnownModIndex:IsModEnabled("workshop-544126369") then
-if GLOBAL.KnownModIndex:IsModEnabled(GLOBAL.KnownModIndex:GetModActualName("Super Hound Waves")) then
+if GLOBAL.KnownModIndex:IsModEnabled("workshop-544126369") then
   print("Super Hound Waves mod detected...adding custom mobs to it...")
 
-  -- Tell the sim to add our stuff after it's done with init. 
-  --AddSimPostInit(AddToHoundedMod)
-  AddSimPostInit(
-    function()
+-- EXAMPLE: Loading this from a separate mod to add a custom mob to Super Hound Waves
+--   -- Tell the sim to add our stuff after it's done with init. 
+--   AddSimPostInit(
+--     function()
+--       -- Define the mob
+--       myMob = {
+--         prefab = "wobster_sheller_land",
+--         brain = "wobsterlandbrain",
+--         enabled=true,
+--         specialVariation="wobster_moonglass_land",
+--         specialVariationRate=0.4,
+--         warning = "CRAAAAaaaAAb"
+--       }
 
-      -- Define the mob
-      myMob = {
-        prefab = "wobster_sheller_land",
-        brain = "wobsterlandbrain",
-        enabled=true,
-        specialVariation="wobster_moonglass_land",
-        specialVariationRate=0.4,
-        warning = "CRAAAAaaaAAb"
-      }
+--       -- Add it to hounded
+--       GLOBAL.TheWorld.components.hounded:AddCustomMob(myMob)
+--     end
+--   )
 
-      -- Add it to hounded
-      GLOBAL.TheWorld.components.hounded:AddCustomMob(myMob)
-    end
-  )
-
-  -- This global function is declared in hounded mod. Make sure any custom brains get the special sauce added. 
-  AddBrainPostInit("wobsterlandbrain", GLOBAL.MakeMobChasePlayer)
-else
-  print("No Super Hound Waves found...")
-end
+--   -- This global function is declared in hounded mod. Make sure any custom brains get the special sauce added. 
+--   AddBrainPostInit("wobsterlandbrain", GLOBAL.MakeMobChasePlayer)
+-- else
+--   print("No Super Hound Waves found...")
+-- end
