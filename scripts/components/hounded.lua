@@ -828,17 +828,21 @@ return Class(function(self, inst)
             if alwaysSpecial or (rand < special_hound_chance/chanceMod) then
                 print("Rolled a " .. rand .. "...summoning special mob")
                 if TheWorld.state.iswinter or TheWorld.state.isspring then
+                    if _spawnwintervariant then
                       if prefab == "hound" then
                          prefab = "icehound"
                       else
                          specialStats = "ice"
                       end
+                    end
                 else
+                    if _spawnsummervariant then
                       if prefab == "hound" then
                          prefab = "firehound"
                       else
                          specialStats = "fire"
                       end
+                    end
                 end
             end
 

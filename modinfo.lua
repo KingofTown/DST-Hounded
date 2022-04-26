@@ -14,7 +14,7 @@ version = "4.0"
 forumthread = "None"
 icon_atlas = "modicon.xml"
 icon = "modicon.tex"
-priority = 5
+priority = -1 -- Attempt to load after most other mods which default at 0 if not defined....
 
 
 -- Compatibility
