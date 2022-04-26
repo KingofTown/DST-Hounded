@@ -10,7 +10,7 @@ local ipairs = GLOBAL.ipairs
         brain: brain name. If a mob has this defined, will add a new PriorityNode to the brain to attack player.
                (leave this out if don't want to override brain function at all)
         CaveState: "open", "used", nil - This mob will only spawn when the cavestate condition is met. If not defined, ignore
-        Season: restricts the season(s) this can come. If not defined...can come any season. 
+        Season: restricts the season(s) this can come. If not defined...can come any season.
         mobMult: multiplier compared to normal hound values (how many to release)
         timeMult: how fast these come out compared to normal hounds. 0.5 is twice as fast. 2 is half speed.
 		    damageMult: how much damage it does compared to normal mob
@@ -29,7 +29,7 @@ local MOB_LIST =
 {
     [1]  = {prefab="hound",
               enabled=true,
-              elemental=normal,
+              elemental=normal
            }, -- No changes here...same old hounds
     [2]  = {prefab="merm",
               enabled=true,
@@ -37,7 +37,7 @@ local MOB_LIST =
               brain="mermbrain",
               mobMult=1,
               timeMult=1.5,
-              healthMult=.5, 
+              healthMult=.5,
               damageMult=.8,
               warning="It smells like rotting fish!"
            },
@@ -82,16 +82,16 @@ local MOB_LIST =
               mobMult=2.5,
               timeMult=.15,
               warning="....tiny vampires!"
-            }, 
+            },
     [8]  = {prefab="lightninggoat",
               enabled=true,
               elemental=normal,
               brain="lightninggoatbrain",
               mobMult=.75,
-              timeMult=1.25, 
+              timeMult=1.25,
               healthMult=.5,
               warning="Those dark clouds look ominous..."
-            }, 
+            },
     [9]  = {prefab="beefalo",
               enabled=true,
               elemental=normal,
@@ -172,7 +172,7 @@ local MOB_LIST =
               mobMult=.1,
               timeMult=3,
               healthMult=.2, -- 180 health
-              healthScale=true, -- 
+              healthScale=true, --
               damageMult=.5,  -- 25 damage per attack
               warning="That one sounds bigger than the others..."
             },
@@ -247,8 +247,8 @@ AddSimPostInit(disableMobs)
 -- Brain Modifications
 --------------------------------------------------
 
---[[ 
-    GLOBAL function - injects a few simple nodes to make any mob a mindless killer. 
+--[[
+    GLOBAL function - injects a few simple nodes to make any mob a mindless killer.
 --]]
 GLOBAL.MakeMobChasePlayer = function(brain)
 
@@ -316,9 +316,9 @@ local function AddToHoundedMod()
 end
 
 -- EXAMPLE: Loading this from a separate mod to add a custom mob to Super Hound Waves
--- If this mod is enabled, add some things to it. 
+-- If this mod is enabled, add some things to it.
 -- if GLOBAL.KnownModIndex:IsModEnabled("workshop-544126369") then
---   -- Tell the sim to add our stuff after it's done with init. 
+--   -- Tell the sim to add our stuff after it's done with init.
 --   AddSimPostInit(
 --     function()
 --       -- Define the mob
@@ -334,6 +334,6 @@ end
 --       GLOBAL.TheWorld.components.hounded:AddCustomMob(myMob)
 --     end
 --   )
---   -- This global function is declared in hounded mod. Make sure any custom brains get the special sauce added. 
+--   -- This global function is declared in hounded mod. Make sure any custom brains get the special sauce added.
 --   AddBrainPostInit("wobsterlandbrain", GLOBAL.MakeMobChasePlayer)
 -- end

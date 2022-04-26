@@ -1,5 +1,5 @@
 -- Mod Settings
-name = "Super Hound Waves (LOCAL)"
+name = "Super Hound Waves"
 description = "Are the occasional Hound attack getting boring? Try this out. Each hound attack will instead" ..
               " be an attack from a random mob selected from the configuration file.\n" ..
 			  "Surprises await those brave enough to try it out.\n\n" ..
@@ -10,7 +10,7 @@ description = "Are the occasional Hound attack getting boring? Try this out. Eac
 			  "Off - mob will not be picked to spawn\n"
 
 author = "KingofTown"
-version = "3.2"
+version = "4.0"
 forumthread = "None"
 icon_atlas = "modicon.xml"
 icon = "modicon.tex"
