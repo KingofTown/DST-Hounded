@@ -57,6 +57,8 @@ return Class(function(self, inst)
     self.quakeMachine.soundIntensity = 0.01
     self.currentIndex = nil
 
+    self.enabled = true
+    
     self.currentMobs = {}
     self.numMobsSpawned = 0
 
@@ -64,20 +66,20 @@ return Class(function(self, inst)
 
     --Configure this data using hounded:SetSpawnData
     local _spawndata =
-        {
-            base_prefab = "hound",
-            winter_prefab = "icehound",
-            summer_prefab = "firehound",
-            upgrade_spawn = "warglet",
+    {
+        base_prefab = "hound",
+        winter_prefab = "icehound",
+        summer_prefab = "firehound",
+        upgrade_spawn = "warglet",
 
-            attack_levels =
-            {
-                intro 	= { warnduration = function() return 120 end, numspawns = function() return 2 end },
-                light 	= { warnduration = function() return 60 end, numspawns = function() return 2 + math.random(2) end },
-                med 	= { warnduration = function() return 45 end, numspawns = function() return 3 + math.random(3) end },
-                heavy 	= { warnduration = function() return 30 end, numspawns = function() return 4 + math.random(3) end },
-                crazy 	= { warnduration = function() return 30 end, numspawns = function() return 6 + math.random(4) end },
-            },
+        attack_levels =
+        {
+            intro 	= { warnduration = function() return 120 end, numspawns = function() return 2 end },
+            light 	= { warnduration = function() return 60 end, numspawns = function() return 2 + math.random(2) end },
+            med 	= { warnduration = function() return 45 end, numspawns = function() return 3 + math.random(3) end },
+            heavy 	= { warnduration = function() return 30 end, numspawns = function() return 4 + math.random(3) end },
+            crazy 	= { warnduration = function() return 30 end, numspawns = function() return 6 + math.random(4) end },
+        },
 
 	    --attack delays actually go from shorter to longer, to account for stronger waves
 		--these names are describing the strength of the houndwave more than the duration
@@ -90,15 +92,15 @@ return Class(function(self, inst)
 			crazy 		= function() return TUNING.TOTAL_DAY_TIME * 11, math.random() * TUNING.TOTAL_DAY_TIME * 5 end,
 		},
 
-            warning_speech = "ANNOUNCE_HOUNDS",
-            warning_sound_thresholds =
-            {	--Key = time, Value = sound prefab
-                {time = 30, sound =  "LVL4"},
-                {time = 60, sound =  "LVL3"},
-                {time = 90, sound =  "LVL2"},
-                {time = 500, sound = "LVL1"},
-            },
-        }
+        warning_speech = "ANNOUNCE_HOUNDS",
+        warning_sound_thresholds =
+        {	--Key = time, Value = sound prefab
+            {time = 30, sound =  "LVL4"},
+            {time = 60, sound =  "LVL3"},
+            {time = 90, sound =  "LVL2"},
+            {time = 500, sound = "LVL1"},
+        },
+    }
 
     local defaultPhrase
     if TheWorld:HasTag("cave") then
@@ -284,7 +286,10 @@ return Class(function(self, inst)
             -- I've modified the mobs brains to be mindless killers with this tag
             mob:AddTag("houndedKiller")
             mob:AddTag("hostile") -- seems natural to set this
-
+            mob:AddTag("monster")
+            mob:AddTag("hound")
+            mob:AddTag("scarytoprey")
+    
             -- This mob has no home anymore. It's set to kill.
             if mob.components.homeseeker then
                 mob:RemoveComponent("homeseeker")
@@ -332,10 +337,11 @@ return Class(function(self, inst)
             local function retargetfn(inst)
                 -- Give all mobs same search dist as hounds
                 local dist = TUNING.HOUND_TARGET_DIST
-                return FindEntity(inst, dist, function(guy)
-                        return inst.components.combat:CanTarget(guy)
+                return FindEntity(inst, dist, 
+                        function(guy)
+                            return inst.components.combat:CanTarget(guy)
                         end,
-                        {"character"}, -- Always target a character?
+                        nil,
                         {"houndedKiller", inst.prefab}, -- Don't kill eachother or like kind
                         nil)
             end
@@ -818,6 +824,7 @@ return Class(function(self, inst)
             local chanceMod = MOB_LIST[self.currentIndex].mobMult or 1
 
             -- If the user is crazy, they can make all of the mobs be a special version.
+            local specialDisabled = (MOB_LIST[self.currentIndex].elemental == "never") or false
             local alwaysSpecial = (MOB_LIST[self.currentIndex].elemental == "always") or false
 
             if alwaysSpecial then
@@ -825,25 +832,31 @@ return Class(function(self, inst)
             end
 
             local rand = math.random()
-            if alwaysSpecial or (rand < special_hound_chance/chanceMod) then
-                print("Rolled a " .. rand .. "...summoning special mob")
-                if TheWorld.state.iswinter or TheWorld.state.isspring then
-                    if _spawnwintervariant then
-                      if prefab == "hound" then
-                         prefab = "icehound"
-                      else
-                         specialStats = "ice"
-                      end
-                    end
-                else
-                    if _spawnsummervariant then
-                      if prefab == "hound" then
-                         prefab = "firehound"
-                      else
-                         specialStats = "fire"
-                      end
+            if specialDisabled ~= true then
+                print("Special Disabled was NOT false")
+                local rand = math.random()
+                if alwaysSpecial or (rand < special_hound_chance/chanceMod) then
+                    print("Rolled a " .. rand .. "...summoning special mob")
+                    if TheWorld.state.iswinter or TheWorld.state.isspring then
+                        if _spawnwintervariant then
+                            if prefab == "hound" then
+                                prefab = "icehound"
+                            else
+                                specialStats = "ice"
+                            end
+                        end
+                    else
+                        if _spawnsummervariant then
+                            if prefab == "hound" then
+                                prefab = "firehound"
+                            else
+                                specialStats = "fire"
+                            end
+                        end
                     end
                 end
+            else
+                print("This mob's elemental was disabled")
             end
 
             -- They spawn from lightning! This lightning is only for show though
@@ -1638,7 +1651,11 @@ return Class(function(self, inst)
         print("Setting Drop Rate to " .. rate)
         _drop_mult = rate
     end
-
+    
+    function self:TurnOffAllWaves()
+        self:SpawnModeNever()
+    end
+    
     --------------------------------------------------------------------------
     --[[ Debug ]]
     --------------------------------------------------------------------------

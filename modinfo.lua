@@ -1,5 +1,5 @@
 -- Mod Settings
-name = "Super Hound Waves"
+name = "Super Hound Waves (Local)"
 description = "Are the occasional Hound attack getting boring? Try this out. Each hound attack will instead" ..
               " be an attack from a random mob selected from the configuration file.\n" ..
 			  "Surprises await those brave enough to try it out.\n\n" ..
@@ -14,7 +14,7 @@ version = "4.0"
 forumthread = "None"
 icon_atlas = "modicon.xml"
 icon = "modicon.tex"
-priority = -1 -- Attempt to load after most other mods which default at 0 if not defined....
+priority = -3
 
 
 -- Compatibility
@@ -23,6 +23,15 @@ api_version = 10
 
 configuration_options =
 {
+	{
+		name = "Enabled",
+		label = "Hound Waves Enabled",
+		options =	{
+						{description = "true", data = "true"},
+						{description = "false", data = "false"},
+					},
+		default = "true",
+	},
 	{
 		name = "hound",
 		label = "Hounds",

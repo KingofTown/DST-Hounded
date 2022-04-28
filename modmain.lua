@@ -215,9 +215,16 @@ local MOB_LIST =
 AddComponentPostInit("hounded",Class)
 
 
+
 -- Check the config file to disable some of the mobs
 local function disableMobs()
 	if GLOBAL.TheWorld.ismastersim then
+
+    if GetModConfigData("Enabled") == "false" then
+      print("Disabling ALL hound waves")
+      GLOBAL.TheWorld.components.hounded:SpawnModeNever()
+    end
+
 		for k,v in pairs(MOB_LIST) do
 			-- Get the config data for it
 			local enabled = GetModConfigData(v.prefab)
@@ -254,7 +261,7 @@ GLOBAL.MakeMobChasePlayer = function(brain)
 
   local function KillKillDieDie(inst)
     -- Chase for 60 seconds, target distance 60
-    return GLOBAL.ChaseAndAttack(inst,60,60)
+    return GLOBAL.ChaseAndAttack(inst,55,55)
   end
 
   attackWall = GLOBAL.WhileNode(function() return brain.inst:HasTag("houndedKiller") end, "Get The Coward", GLOBAL.AttackWall(brain.inst))
